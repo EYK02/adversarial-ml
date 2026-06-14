@@ -30,3 +30,16 @@ to recreate results.
 - At what percentage is the model considered unreliable?
 - Does adversarial training improve accuracy uniformly across all epsilon values?
 - Are certain digits (0-9) classes more vulnerable than others to perturbations?
+
+## FGSM Visualization
+
+**Observations:**
+Perturbations appear as grey noise on the black background but cause minimal distortion of the digit itself. The digit remains visually recognizable to the human eye even at epsilon=0.30, yet accuracy of the model drops to 63%.
+
+**Implications:**
+A human would still classify correctly where the model fails as to the human eye, the FGSM perturbations are only visible on a uniform background. This confirms that the adversarial vulnerability is model-specific, and not a perceptual ambiguity.
+
+**Further questions:**
+- Would an attack concentrated on distorting the digit itself be more or less effective? Against humans, maybe, but maybe not against a model?
+- When the model misclassifies, are they random across the digits 0-9, or does it consistently confuse certain digits with specific others? (perhaps 1 and 7?)
+- Will the model's confidence decrease as epsilon increases, or does it stay high even when wrong?
