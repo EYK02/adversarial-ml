@@ -74,7 +74,7 @@ def main():
     model.eval()
 
     attack_fn = ATTACKS[args.attack]
-    save_path = f'results/{args.attack}_{args.model}_visualization.png'
+    save_path = f'results/images/{args.attack}_{args.model}_visualization.png'
     title = f'{args.attack.upper()} Attack on {args.model} model (green=correct, red=misclassified)'
 
     test_loader = get_mnist_test_loader(batch_size=1)
