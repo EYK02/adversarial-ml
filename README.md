@@ -102,15 +102,18 @@ Visualize attack:
 python -m results.visualize_attacks --attack fgsm --model base
 python -m results.visualize_attacks --attack fgsm --model fgsm_defended
 ```
-Currently available attacks: fgsm, pgd
-Currently available models: fgsm_defended, (to be added: pgd_defended)
+Currently available attacks: fgsm, pgd5, pgd10, pgd20
+Currently available models: fgsm_defended, pgd5_defended, pgd10_defended, pgd20_defended
 
 Train adversarial defense:
 ```bash
-python -m defense.adversarial_training.
+python -m defenses.adversarial_training --attack fgsm --epsilon 0.2
+python -m defenses.adversarial_training --attack pgd5 --epsilon 0.15
+python -m defenses.adversarial_training --attack pgd10 --epsilon 0.15
+python -m defenses.adversarial_training --attack pgd20 --epsilon 0.15
 ```
 
 Evaluate adversarially trained model and compare to baseline model:
 ```bash
-python -m defense.evaluate_defense
+python -m defenses.adversarial_training --attack pgd5 --epsilon 0.15
 ```
