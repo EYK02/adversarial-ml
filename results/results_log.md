@@ -26,7 +26,7 @@ to recreate results.
 - Drop from epsilon=0.0 -> 0.10 is 4.41pp, from epsilon=0.20 -> 0.30 is 18.88pp.
 
 **Open questions:**
-- At what epsiolon do perturbations become visible to the human eye?
+- At what epsilon do perturbations become visible to the human eye?
 - At what percentage is the model considered unreliable?
-- Does adversarial training improve accuracy uniformly accross all epsilon values?
+- Does adversarial training improve accuracy uniformly across all epsilon values?
 - Are certain digits (0-9) classes more vulnerable than others to perturbations?
