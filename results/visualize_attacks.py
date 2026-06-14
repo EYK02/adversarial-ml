@@ -3,23 +3,12 @@ import torch
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
 from model import CNN
-from attacks.fgsm import fgsm_attack
-from attacks.pgd import pgd_attack
 from attacks.registry import ATTACKS
 from models.registry import MODELS
+from utils import get_mnist_test_loader
 
 epsilons = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
-
-def get_test_loader():
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
-    test_dataset = datasets.MNIST(root='./data', train=False, download=False, transform=transform)
-    return DataLoader(test_dataset, batch_size=1, shuffle=True)
 
 def get_examples(model, device, test_loader, attack_fn, epsilons, n=5):
     examples = {eps: [] for eps in epsilons}
@@ -89,7 +78,7 @@ def main():
     save_path = f'results/{args.attack}_{args.model}_visualization.png'
     title = f'{args.attack.upper()} Attack on {args.model} model (green=correct, red=misclassified)'
 
-    test_loader = get_test_loader()
+    test_loader = get_mnist_test_loader(batch_size=1)
     examples = get_examples(model, device, test_loader, attack_fn, epsilons)
     plot_examples(examples, epsilons, title, save_path)
 

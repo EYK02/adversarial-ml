@@ -1,21 +1,12 @@
 import argparse
 import torch
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
 from model import CNN
 from attacks.registry import ATTACKS
+from utils import get_mnist_test_loader
 
 base_model_path = 'models/cnn_mnist.pth'
 batch_size = 64
 epsilons = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
-
-def get_data_loader():
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
-    test_dataset = datasets.MNIST(root='./data', train=False, download=False, transform=transform)
-    return DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 def evaluate(model, device, test_loader, attack_fn, epsilon):
     model.eval()
@@ -45,7 +36,7 @@ def main():
     model.eval()
 
     attack_fn = ATTACKS[args.attack]
-    test_loader = get_data_loader()
+    test_loader = get_mnist_test_loader(batch_size)
 
     print(f"Evaluating {args.attack.upper()} attack on base model\n")
     print(f"|{'Epsilon':<12}|{'Accuracy':<12}|")

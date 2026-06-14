@@ -14,4 +14,7 @@ ATTACKS = {
     'pgd20': lambda model, device, data, target, eps: pgd_attack(
         model, device, data, target, eps, alpha=0.01, iters=20
     ),
+    'pgd40': lambda model, device, data, target, eps: pgd_attack(
+        model, device, data, target, eps, alpha=0.01, iters=40
+    ),
 }
