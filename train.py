@@ -1,25 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
 from model import CNN
+from utils import get_mnist_train_loader, get_mnist_test_loader
 
 batch_size = 64
 learning_rate = 0.001
 num_epochs = 5
-model_save_path = 'models/cnn_mnist.pth'
-
-def get_data_loaders(batch_size=64):
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
-    train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-    test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-    return train_loader, test_loader
+model_save_path = 'models/cnn_mnist.pth'   
 
 def train(model, device, train_loader, optimizer, criterion):
     model.train()
@@ -63,7 +51,8 @@ def evaluate(model, device, test_loader, criterion):
 
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    train_loader, test_loader = get_data_loaders(batch_size)
+    train_loader = get_mnist_train_loader(batch_size)
+    test_loader = get_mnist_test_loader(batch_size)
 
     model = CNN().to(device)
     criterion = nn.CrossEntropyLoss()

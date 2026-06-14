@@ -2,29 +2,15 @@ import argparse
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
 from model import CNN
-from attacks.fgsm import fgsm_attack
-from attacks.pgd import pgd_attack
 from attacks.registry import ATTACKS
 from models.registry import MODELS
+from utils import get_mnist_train_loader, get_mnist_test_loader
 
 base_model_path = 'models/cnn_mnist.pth'
 batch_size = 64
 epochs = 5
 learning_rate = 0.001
-
-def get_data_loaders():
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
-    train_dataset = datasets.MNIST(root='./data', train=True, download=False, transform=transform)
-    test_dataset = datasets.MNIST(root='./data', train=False, download=False, transform=transform)
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-    return train_loader, test_loader
 
 def train_adversarial(model, device, train_loader, optimizer, criterion, attack_fn, epsilon):
     model.train()
@@ -87,7 +73,8 @@ def main():
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    train_loader, test_loader = get_data_loaders()
+    train_loader = get_mnist_train_loader(batch_size)
+    test_loader = get_mnist_test_loader(batch_size)
 
     defense_model = CNN().to(device)
     defense_model.load_state_dict(torch.load(base_model_path, map_location=device))

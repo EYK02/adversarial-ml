@@ -1,24 +1,13 @@
 import argparse
 import torch
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
 from model import CNN
-from attacks.fgsm import fgsm_attack
-from attacks.pgd import pgd_attack
 from attacks.registry import ATTACKS
 from models.registry import MODELS
+from utils import get_mnist_test_loader
 
 base_model_path = 'models/cnn_mnist.pth'
 batch_size = 64
 epsilons = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
-
-def get_data_loader():
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
-    test_dataset = datasets.MNIST(root='./data', train=False, download=False, transform=transform)
-    return DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 def evaluate_model(model, device, test_loader, attack_fn, epsilon):
     model.eval()
@@ -54,7 +43,7 @@ def main():
     defense_model.eval()
 
     attack_fn = ATTACKS[args.attack]
-    test_loader = get_data_loader()
+    test_loader = get_mnist_test_loader(batch_size)
 
     print(f"Attack: {args.attack} | Defense: {args.defense}\n")
     print(f"|{'Epsilon':<12}|{'Baseline':<14}|{'Defended':<14}|{'Delta':<10}|")
