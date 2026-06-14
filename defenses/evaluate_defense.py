@@ -5,7 +5,7 @@ from model import CNN
 from attacks.fgsm import fgsm_attack
 
 base_model_path = 'models/cnn_mnist.pth'
-defense_model_path = 'models/cnn_mnist_adv.pth'
+defense_model_path = 'models/cnn_mnist_fgsm_adv.pth'
 batch_size = 64
 epsilons = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
 
