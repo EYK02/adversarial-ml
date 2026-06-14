@@ -6,15 +6,16 @@
 **Model:** CNN trained on MNIST, 98.68% clean accuracy
 **Attack:** Fast Gradient Sign Method (FGSM)
 
-Epsilon      Test Accuracy
---------------------------
-0.00         98.68%
-0.05         97.34%
-0.10         94.54%
-0.15         89.43%
-0.20         82.18%
-0.25         73.12%
-0.30         63.30%
+|Epsilon|      Test Accuracy|
+|------------|--------------|
+|0.00|         98.68%|
+|0.05|         97.34%|
+|0.10|         94.54%|
+|0.15|         89.43%|
+|0.20|         82.18%|
+|0.25|         73.12%|
+|0.30|         63.30%|
+
 
 ```
 python -m attacks.evaluate_fgsm
