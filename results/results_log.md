@@ -91,3 +91,31 @@ Epsilon      Baseline       Defended       Delta
 
 **Further questions:**
 - Are results FGSM-sepcific or general and robust? Test with other attacks (PGD, etc.)
+
+## PGD Attack Evaluation - alpha=0.01, steps=40
+|Epsilon     |Baseline      |Defended      |Delta     |
+|-|-|-|-|
+| 0.00       | 98.68       % | 99.20       % | +0.52    |
+| 0.05       | 95.99       % | 98.60       % | +2.61    |
+| 0.10       | 86.80       % | 97.41       % | +10.61   |
+| 0.15       | 68.48       % | 95.82       % | +27.34   |
+| 0.20       | 46.31       % | 92.76       % | +46.45   |
+| 0.25       | 28.82       % | 88.99       % | +60.17   |
+| 0.30       | 16.30       % | 84.42       % | +68.12   |
+
+**Observations:**
+- PGD stronger than FGSM. 16% vs 63% at epsilon=0.30
+- Defense against FGSM generalises meaningfully to PGD despite never seeing PGD during training.
+
+**Caveats:**
+- Defense not as effective under PGD than FGSM, thus not fully robust
+- Adversarial training against PGS would most likely improve PGD robustness further
+
+**Questions answered:**
+- Are FGSM defense attack-specific? No, it generalises to PGD
+- Is PGD stronger than FGSM? Yes
+
+**Further questions:**
+- Would adversarial training against PGD outperform FGSM adversarial training?
+- What is the optimal PGD steps, is 40 steps sufficient?
+- How does it vary with different alpha values?
