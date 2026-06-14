@@ -87,14 +87,12 @@ Traning baseline model:
 python train.py
 ```
 
-Evaluate FGSM attack:
+Evaluate attack:
 ```bash
-pythin -m attacks.evaluate_fgsm
-```
-
-Evaluate PGD attack:
-```bash
-python -m attacks.evaluate_pgd
+python -m attacks.evaluate_attack --attack fgsm
+python -m attacks.evaluate_attack --attack pgd5
+python -m attacks.evaluate_attack --attack pgd10
+python -m attacks.evaluate_attack --attack pgd20
 ```
 
 Visualize attack:
