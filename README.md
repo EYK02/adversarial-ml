@@ -99,10 +99,11 @@ python -m attacks.evaluate_pgd
 
 Visualize attack:
 ```bash
-python -m results.visualize_fgsm
+python -m results.visualize_attacks --attack fgsm --model base
+python -m results.visualize_attacks --attack fgsm --model fgsm_defended
 ```
-
-Note: To change which model to visualize, one is required to edit the fields model_path and save_path to their relevant paths and relevant variables (alpha and iters for example for PGD).
+Currently available attacks: fgsm, pgd
+Currently available models: fgsm_defended, (to be added: pgd_defended)
 
 Train adversarial defense:
 ```bash

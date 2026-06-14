@@ -7,7 +7,7 @@ from model import CNN
 from attacks.fgsm import fgsm_attack
 
 base_model_path = 'models/cnn_mnist.pth'
-defense_model_path = 'models/cnn_mnist_adv.pth'
+defense_model_path = 'models/cnn_mnist_fgsm_adv.pth'
 batch_size = 64
 epochs = 5
 learning_rate = 0.001

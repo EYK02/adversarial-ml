@@ -43,12 +43,12 @@ def main():
     test_loader = get_data_loader(batch_size)
 
     print("Evaluating FGSM Attack...")
-    print(f'{"Epsilon":<12} {"Test Accuracy":<12}')
-    print("-" * 26)
+    print(f'|{"Epsilon":<12}|{"Test Accuracy":<12}|')
+    print("|-|-|")
 
     for epsilon in epsilons:
         accuracy, _ = evaluate_fgsm(model, device, test_loader, epsilon)
-        print(f'{epsilon:<12.2f} {accuracy*100:<.2f}%')
+        print(f'|{epsilon:<12.2f}|{accuracy*100:<.2f}%|')
 
 if __name__ == "__main__":
     main()
