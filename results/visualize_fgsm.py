@@ -11,6 +11,9 @@ model_path = 'models/cnn_mnist.pth'
 epsilons = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
 save_path = 'results/fgsm_visualization.png'
 
+# TODO: Refactor to generalize for FGSM, PGD, and other attacks with minimal code duplication.
+
+
 def get_test_loader():
     transform = transforms.Compose([
         transforms.ToTensor(),
