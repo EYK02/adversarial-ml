@@ -43,3 +43,12 @@ A human would still classify correctly where the model fails as to the human eye
 - Would an attack concentrated on distorting the digit itself be more or less effective? Against humans, maybe, but maybe not against a model?
 - When the model misclassifies, are they random across the digits 0-9, or does it consistently confuse certain digits with specific others? (perhaps 1 and 7?)
 - Will the model's confidence decrease as epsilon increases, or does it stay high even when wrong?
+
+## Adversarial Training Defense
+
+**Defense epsilon:** 0.20
+**Reason:**
+Accuracy drops below 90% at this range and perturbations become more noticeable.
+
+**Questions:**
+Does defense training against epsilon=0.20 generalize to other values of epsiolon, especially at higher values that the model hasn't seen during training?
