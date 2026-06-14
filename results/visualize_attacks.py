@@ -1,3 +1,4 @@
+import argparse
 import torch
 import matplotlib
 matplotlib.use('Agg')
@@ -6,13 +7,23 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from model import CNN
 from attacks.fgsm import fgsm_attack
+from attacks.pgd import pgd_attack
 
-model_path = 'models/cnn_mnist.pth'
-epsilons = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
-save_path = 'results/fgsm_visualization.png'
+MODELS = {
+    'base': 'models/cnn_mnist.pth',
+    'fgsm_defended': 'models/cnn_mnist_fgsm_adv.pth',
+}
 
-# TODO: Refactor to generalize for FGSM, PGD, and other attacks with minimal code duplication.
+ATTACKS = {
+    'fgsm': lambda model, device, images, labels, eps: fgsm_attack(
+        model, device, images, labels, eps
+    ),
+    'pgd': lambda model, device, images, labels, eps: pgd_attack(
+        model, device, images, labels, eps, alpha=0.01, iters=40
+    ),
+}
 
+EPSILONS = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
 
 def get_test_loader():
     transform = transforms.Compose([
@@ -22,7 +33,7 @@ def get_test_loader():
     test_dataset = datasets.MNIST(root='./data', train=False, download=False, transform=transform)
     return DataLoader(test_dataset, batch_size=1, shuffle=True)
 
-def get_examples(model, device, test_loader, epsilons, n=5):
+def get_examples(model, device, test_loader, attack_fn, epsilons, n=5):
     examples = {eps: [] for eps in epsilons}
 
     for images, labels in test_loader:
@@ -35,7 +46,7 @@ def get_examples(model, device, test_loader, epsilons, n=5):
             if len(examples[eps]) >= n:
                 continue
 
-            perturbed = fgsm_attack(model, device, images.clone(), labels, eps)
+            perturbed = attack_fn(model, device, images.clone(), labels, eps)
             output = model(perturbed)
             _, predicted = torch.max(output, 1)
 
@@ -44,7 +55,7 @@ def get_examples(model, device, test_loader, epsilons, n=5):
 
     return examples
 
-def plot_examples(examples, epsilons, n=5):
+def plot_examples(examples, epsilons, title, save_path, n=5):
     fig, axes = plt.subplots(
         len(epsilons), n,
         figsize=(n * 2, len(epsilons) * 2)
@@ -67,20 +78,32 @@ def plot_examples(examples, epsilons, n=5):
             if col == 0:
                 ax.set_ylabel(f'ε={eps}', fontsize=9, rotation=0, labelpad=35)
 
-    plt.suptitle('FGSM Attack — Original vs Perturbed (green=correct, red=misclassified)', fontsize=11)
+    plt.suptitle(title, fontsize=11)
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     print(f'Saved to {save_path}')
 
 def main():
+    parser = argparse.ArgumentParser(description='Visualise adversarial attacks on MNIST')
+    parser.add_argument('--attack', type=str, default='fgsm', choices=ATTACKS.keys(),
+                        help='Attack to visualise')
+    parser.add_argument('--model', type=str, default='base', choices=MODELS.keys(),
+                        help='Model to attack')
+    args = parser.parse_args()
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     model = CNN().to(device)
-    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.load_state_dict(torch.load(MODELS[args.model], map_location=device))
     model.eval()
 
+    attack_fn = ATTACKS[args.attack]
+    save_path = f'results/{args.attack}_{args.model}_visualization.png'
+    title = f'{args.attack.upper()} Attack on {args.model} model (green=correct, red=misclassified)'
+
     test_loader = get_test_loader()
-    examples = get_examples(model, device, test_loader, epsilons)
-    plot_examples(examples, epsilons)
+    examples = get_examples(model, device, test_loader, attack_fn, EPSILONS)
+    plot_examples(examples, EPSILONS, title, save_path)
 
 if __name__ == '__main__':
     main()
