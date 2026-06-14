@@ -40,12 +40,36 @@ Accuracy degrades as epsilon increases. Perturberation can be observed as grey n
 
 Adversarial training nearly eliminates FGSM vulnerability accross all epsilon values, including values not seen during training. 
 
+## PGD Attack Evaluation - baseline vs adversarially trained model (trained at epsilon=0.20, evaluated at aplha=0.01 and steps=40)
+|Epsilon     |Baseline      |Defended      |Delta     |
+|-|-|-|-|
+| 0.00       | 98.68       % | 99.20       % | +0.52    |
+| 0.05       | 95.99       % | 98.60       % | +2.61    |
+| 0.10       | 86.80       % | 97.41       % | +10.61   |
+| 0.15       | 68.48       % | 95.82       % | +27.34   |
+| 0.20       | 46.31       % | 92.76       % | +46.45   |
+| 0.25       | 28.82       % | 88.99       % | +60.17   |
+| 0.30       | 16.30       % | 84.42       % | +68.12   |
+
+We can immediately see that PGD is a substantially more stronger attack compared to FGSM. At epsilon=0.30, FGSM gets the baseline down to 63% while PGD gets it down to 16%, not much better than guessing randomly. 
+
+The adversarially trained model still holds up to the PGD attack, going from 99.20% to 84.42% at epsilon=0.30. The defense isn't perfect as compared to FGSM, it drops from 97.17% to 84.42% at epsilon=0.30. Looking at the delta, the defense is clearly doing substantial work, pulling the model from near-random (16%) to being useful (84%).
+
+This shows that adversarial training against FGSM provided partial but still meaningful generalisation to PGD.
+
 ## Visualizations
-### Baseline model undef FGSM attack
+### Baseline model under FGSM attack
 ![FGSM Baseline](results/fgsm_visualization.png)
 
-### Adversially trained model undef FGSM attack
+### Adversially trained model under FGSM attack
 ![FGSM Defended](results/fgsm_adversarial_visualization.png)
+
+### Baseline model under PGD attack
+![PGD Baseline](results/pgd_visualization.png)
+
+### Adversially trained model (using FGSM) under PGD attack
+![PGD Defended](results/pgd_adversarial_visualization.png)
+
 
 ## Setup
 ```bash
@@ -68,12 +92,17 @@ Evaluate FGSM attack:
 pythin -m attacks.evaluate_fgsm
 ```
 
+Evaluate PGD attack:
+```bash
+python -m attacks.evaluate_pgd
+```
+
 Visualize attack:
 ```bash
 python -m results.visualize_fgsm
 ```
 
-Note: To change which model to visualize, one is required to edit the fields model_path and save_path to their relevant paths.
+Note: To change which model to visualize, one is required to edit the fields model_path and save_path to their relevant paths and relevant variables (alpha and iters for example for PGD).
 
 Train adversarial defense:
 ```bash
