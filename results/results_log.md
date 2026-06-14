@@ -51,7 +51,7 @@ A human would still classify correctly where the model fails as to the human eye
 Accuracy drops below 90% at this range and perturbations become more noticeable.
 
 **Questions:**
-Does defense training against epsilon=0.20 generalize to other values of epsiolon, especially at higher values that the model hasn't seen during training?
+Does defense training against epsilon=0.20 generalize to other values of epsilon, especially at higher values that the model hasn't seen during training?
 
 ## Defense Evaluation - Adversarial Training at epsilon = 0.20
 
@@ -82,10 +82,11 @@ Epsilon      Baseline       Defended       Delta
 **Possible Caveats:**
 - Results may be over-tuned to FGSM and not be effective against other forms of adversarial attacks.
 - MNIST is a simple dataset and may not be applicable to harder tasks.
+- Near-perfect robustness from 5 epochs is unexpected and warrant further investigation.
 
 **Questions answered:**
 - Does adversarial training improve accuracy uniformly? Yes
-- Does defense generalise beyond trainig epsilon? Yes
+- Does defense generalise beyond training epsilon? Yes
 
 **Further questions:**
-- Are results FGSM-sepcific or general and rubust? Test with other attacks (PGD, etc.)
+- Are results FGSM-sepcific or general and robust? Test with other attacks (PGD, etc.)
