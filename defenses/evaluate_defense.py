@@ -5,28 +5,8 @@ from torch.utils.data import DataLoader
 from model import CNN
 from attacks.fgsm import fgsm_attack
 from attacks.pgd import pgd_attack
-
-ATTACKS = {
-    'fgsm': lambda model, device, data, target, eps: fgsm_attack(
-        model, device, data, target, eps
-    ),
-    'pgd5': lambda model, device, data, target, eps: pgd_attack(
-        model, device, data, target, eps, alpha=0.01, iters=5
-    ),
-    'pgd10': lambda model, device, data, target, eps: pgd_attack(
-        model, device, data, target, eps, alpha=0.01, iters=10
-    ),
-    'pgd20': lambda model, device, data, target, eps: pgd_attack(
-        model, device, data, target, eps, alpha=0.01, iters=20
-    ),
-}
-
-DEFENDED_MODELS = {
-    'fgsm': 'models/cnn_mnist_fgsm_adv.pth',
-    'pgd5': 'models/cnn_mnist_pgd5_adv.pth',
-    'pgd10': 'models/cnn_mnist_pgd10_adv.pth',
-    'pgd20': 'models/cnn_mnist_pgd20_adv.pth',
-}
+from attacks.registry import ATTACKS
+from models.registry import MODELS
 
 base_model_path = 'models/cnn_mnist.pth'
 batch_size = 64
@@ -59,7 +39,7 @@ def main():
     parser = argparse.ArgumentParser(description='Evaluate adversarial defense on MNIST')
     parser.add_argument('--attack', type=str, default='fgsm', choices=ATTACKS.keys(),
                         help='Attack to evaluate against')
-    parser.add_argument('--defense', type=str, default='fgsm', choices=DEFENDED_MODELS.keys(),
+    parser.add_argument('--defense', type=str, default='fgsm', choices=MODELS.keys(),
                         help='Defended model to evaluate')
     args = parser.parse_args()
 
@@ -70,7 +50,7 @@ def main():
     base_model.eval()
 
     defense_model = CNN().to(device)
-    defense_model.load_state_dict(torch.load(DEFENDED_MODELS[args.defense], map_location=device))
+    defense_model.load_state_dict(torch.load(MODELS[args.defense], map_location=device))
     defense_model.eval()
 
     attack_fn = ATTACKS[args.attack]

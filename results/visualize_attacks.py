@@ -8,22 +8,10 @@ from torch.utils.data import DataLoader
 from model import CNN
 from attacks.fgsm import fgsm_attack
 from attacks.pgd import pgd_attack
+from attacks.registry import ATTACKS
+from models.registry import MODELS
 
-MODELS = {
-    'base': 'models/cnn_mnist.pth',
-    'fgsm_defended': 'models/cnn_mnist_fgsm_adv.pth',
-}
-
-ATTACKS = {
-    'fgsm': lambda model, device, images, labels, eps: fgsm_attack(
-        model, device, images, labels, eps
-    ),
-    'pgd': lambda model, device, images, labels, eps: pgd_attack(
-        model, device, images, labels, eps, alpha=0.01, iters=40
-    ),
-}
-
-EPSILONS = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
+epsilons = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
 
 def get_test_loader():
     transform = transforms.Compose([
@@ -102,8 +90,8 @@ def main():
     title = f'{args.attack.upper()} Attack on {args.model} model (green=correct, red=misclassified)'
 
     test_loader = get_test_loader()
-    examples = get_examples(model, device, test_loader, attack_fn, EPSILONS)
-    plot_examples(examples, EPSILONS, title, save_path)
+    examples = get_examples(model, device, test_loader, attack_fn, epsilons)
+    plot_examples(examples, epsilons, title, save_path)
 
 if __name__ == '__main__':
     main()

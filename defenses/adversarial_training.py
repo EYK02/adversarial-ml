@@ -7,28 +7,8 @@ from torchvision import datasets, transforms
 from model import CNN
 from attacks.fgsm import fgsm_attack
 from attacks.pgd import pgd_attack
-
-ATTACKS = {
-    'fgsm': lambda model, device, data, target, eps: fgsm_attack(
-        model, device, data, target, eps
-    ),
-    'pgd5': lambda model, device, data, target, eps: pgd_attack(
-        model, device, data, target, eps, alpha=0.01, iters=5
-    ),
-    'pgd10': lambda model, device, data, target, eps: pgd_attack(
-        model, device, data, target, eps, alpha=0.01, iters=10
-    ),
-    'pgd20': lambda model, device, data, target, eps: pgd_attack(
-        model, device, data, target, eps, alpha=0.01, iters=20
-    ),
-}
-
-SAVE_PATHS = {
-    'fgsm': 'models/cnn_mnist_fgsm_adv.pth',
-    'pgd5': 'models/cnn_mnist_pgd5_adv.pth',
-    'pgd10': 'models/cnn_mnist_pgd10_adv.pth',
-    'pgd20': 'models/cnn_mnist_pgd20_adv.pth',
-}
+from attacks.registry import ATTACKS
+from models.registry import MODELS
 
 base_model_path = 'models/cnn_mnist.pth'
 batch_size = 64
@@ -116,7 +96,7 @@ def main():
     criterion = nn.CrossEntropyLoss()
 
     attack_fn = ATTACKS[args.attack]
-    save_path = SAVE_PATHS[args.attack]
+    save_path = MODELS[args.attack]
 
     print(f"Adversarial training — attack={args.attack}, epsilon={args.epsilon}\n")
 
