@@ -13,6 +13,8 @@ Train a CNN on MNIST, implement adversarial attacks (FGSM, eventually PGD and mo
 - `results/` - plots and metrics
 
 ## Setup
+```
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
+```
