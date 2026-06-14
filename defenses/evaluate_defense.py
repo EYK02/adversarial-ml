@@ -1,8 +1,7 @@
 import argparse
 import torch
 from model import CNN
-from attacks.registry import ATTACKS
-from models.registry import MODELS
+from attacks.registry import ATTACKS, MODELS
 from utils import get_mnist_test_loader
 
 base_model_path = 'models/cnn_mnist.pth'

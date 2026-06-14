@@ -18,3 +18,11 @@ ATTACKS = {
         model, device, data, target, eps, alpha=0.01, iters=40
     ),
 }
+
+MODELS = {
+    'base': 'models/cnn_mnist.pth',
+    'fgsm': 'models/cnn_mnist_fgsm.pth',
+    'pgd5': 'models/cnn_mnist_pgd5.pth',
+    'pgd10': 'models/cnn_mnist_pgd10.pth',
+    'pgd20': 'models/cnn_mnist_pgd20.pth',
+}
