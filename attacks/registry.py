@@ -25,4 +25,5 @@ MODELS = {
     'pgd5': 'models/cnn_mnist_pgd5.pth',
     'pgd10': 'models/cnn_mnist_pgd10.pth',
     'pgd20': 'models/cnn_mnist_pgd20.pth',
+    'pgd40': 'models/cnn_mnist_pgd40.pth',
 }
