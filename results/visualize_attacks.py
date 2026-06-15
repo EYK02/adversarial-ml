@@ -5,7 +5,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from model import CNN
 from attacks.registry import ATTACKS, MODELS
-from utils import get_mnist_test_loader
+from utils.loader import get_mnist_test_loader
 
 epsilons = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
 

@@ -1,13 +1,16 @@
+import os
+os.makedirs('models', exist_ok=True)
+import argparse
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from model import CNN
-from utils import get_mnist_train_loader, get_mnist_test_loader
+from utils.loader import get_mnist_train_loader, get_mnist_test_loader
+from utils.reproducibility import set_seed
 
 batch_size = 64
 learning_rate = 0.001
 num_epochs = 5
-model_save_path = 'models/cnn_mnist.pth'   
 
 def train(model, device, train_loader, optimizer, criterion):
     model.train()
@@ -50,6 +53,11 @@ def evaluate(model, device, test_loader, criterion):
     return avg_loss, accuracy
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--seed', type=int, default=0, help='Random seed for reproducibility')
+    args = parser.parse_args()
+    set_seed(args.seed)
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     train_loader = get_mnist_train_loader(batch_size)
     test_loader = get_mnist_test_loader(batch_size)
@@ -64,6 +72,7 @@ def main():
 
         print(f'Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.2f}%')
 
+    model_save_path = f'models/cnn_mnist_seed{args.seed}.pth'
     torch.save(model.state_dict(), model_save_path)
 
 if __name__ == '__main__':
