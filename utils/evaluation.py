@@ -1,5 +1,7 @@
 # utils/evaluation.py
+
 import torch
+
 def evaluate(model, device, loader, attack_fn=None, epsilon=None, criterion=None):
     model.eval()
 

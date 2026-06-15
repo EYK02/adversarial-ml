@@ -1,3 +1,5 @@
+# attacks/evaluate_attack.py
+
 import argparse
 import torch
 from model import CNN
@@ -6,7 +8,8 @@ from utils.data import get_mnist_test_loader
 from utils.config import EPSILONS
 from utils.reproducibility import set_seed
 from utils.evaluation import evaluate
-from utils.logging import print_header, format_table_row
+from utils.formatting import format_table_row
+from utils.logging import print_header
 batch_size = 64
 
 def main():
