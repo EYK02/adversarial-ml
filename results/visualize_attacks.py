@@ -7,8 +7,7 @@ from model import CNN
 from attacks.registry import ATTACKS, MODELS
 from utils.data import get_mnist_test_loader
 from utils.reproducibility import set_seed
-
-epsilons = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
+from utils.config import EPSILONS
 
 def get_examples(model, device, test_loader, attack_fn, epsilons, n=5):
     examples = {eps: [] for eps in epsilons}
@@ -82,8 +81,8 @@ def main():
     title = f'{args.attack.upper()} Attack on {args.model} model (green=correct, red=misclassified)'
 
     test_loader = get_mnist_test_loader(batch_size=1)
-    examples = get_examples(model, device, test_loader, attack_fn, epsilons)
-    plot_examples(examples, epsilons, title, save_path)
+    examples = get_examples(model, device, test_loader, attack_fn, EPSILONS)
+    plot_examples(examples, EPSILONS, title, save_path)
 
 if __name__ == '__main__':
     main()

@@ -4,6 +4,7 @@ import numpy as np
 import os
 
 def set_seed(seed):
+    torch.set_float32_matmul_precision('high')
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -12,7 +13,7 @@ def set_seed(seed):
         torch.cuda.manual_seed_all(seed)
 
     # required for deterministic CUDA math
-    os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8"
+    os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False

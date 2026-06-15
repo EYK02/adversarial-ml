@@ -1,6 +1,15 @@
+from random import random
+import numpy as np
+
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 import torch
+
+def seed_worker(worker_id):
+    worker_seed = torch.initial_seed() % 2**32
+    torch.manual_seed(worker_seed)
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
 
 def get_mnist_train_loader(batch_size=64, seed=0):
     transform = transforms.Compose([
@@ -23,6 +32,7 @@ def get_mnist_train_loader(batch_size=64, seed=0):
         batch_size=batch_size,
         shuffle=True,
         generator=g,
+        worker_init_fn=seed_worker,
         num_workers=0
     )
 
