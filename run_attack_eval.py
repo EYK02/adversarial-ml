@@ -1,4 +1,6 @@
+# run_attack_eval.py
 
+import sys
 from utils.runner import Experiment, ExperimentRunner
 
 runner = ExperimentRunner()
@@ -8,13 +10,13 @@ experiments = []
 for seed in range(5):
     experiments.append(
         Experiment(
-            f"FGSM seed {seed}",
+            f"pgd5 seed {seed}",
             [
-                "python",
+                sys.executable,
                 "-m",
                 "attacks.evaluate_attack",
                 "--attack",
-                "fgsm",
+                "pgd5",
                 "--seed",
                 str(seed)
             ]
