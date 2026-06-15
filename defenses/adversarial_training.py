@@ -1,6 +1,7 @@
 # defenses/adversarial_training.py
 
 import argparse
+import time
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -10,6 +11,9 @@ from utils.data import get_mnist_train_loader, get_mnist_test_loader
 from utils.logger import JSONLLogger
 from utils.reproducibility import set_seed
 from utils.evaluation import evaluate
+from utils.run_id import make_run_id
+
+start_time = time.perf_counter()
 
 batch_size = 64
 epochs = 5
@@ -64,6 +68,13 @@ def main():
 
     set_seed(args.seed)
     base_model_path = f'models/cnn_mnist_seed{args.seed}.pth'
+    run_id = make_run_id(
+        task="adv_train",
+        model="cnn_mnist",
+        attack=args.attack,
+        epsilon=args.epsilon,
+        seed=args.seed
+    )
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -87,6 +98,7 @@ def main():
         test_loss, test_acc = evaluate(defense_model, device, test_loader, criterion=criterion)
         
         training_logger.log({
+            "run_id":       run_id,
             "run_type":     "adv_training",
 
             "seed":         args.seed,
@@ -104,13 +116,19 @@ def main():
     torch.save(defense_model.state_dict(), save_path)
     print(f'\nModel saved to {save_path}')
 
+    torch.cuda.synchronize() if torch.cuda.is_available() else None
+    duration = time.perf_counter() - start_time
+
     model_logger.log({
+        "run_id":   run_id,
         "run_type": "model_save",
 
         "seed": args.seed,
 
         "attack": args.attack,
         "epsilon": args.epsilon,
+
+        "duration": duration,
 
         "model": "adv_cnn_mnist",
         "model_path": save_path
