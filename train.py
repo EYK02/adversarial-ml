@@ -9,10 +9,15 @@ from model import CNN
 from utils.data import get_mnist_train_loader, get_mnist_test_loader
 from utils.reproducibility import set_seed
 from utils.evaluation import evaluate
+from utils.logger import JSONLLogger
 
 batch_size = 64
 learning_rate = 0.001
 num_epochs = 5
+
+training_logger = JSONLLogger("results/jsonl/training.jsonl")
+model_logger = JSONLLogger("results/jsonl/model_save.jsonl")
+
 
 def train(model, device, loader, optimizer, criterion):
     model.train()
@@ -55,14 +60,38 @@ def main():
         train_loss, train_acc = train(model, device, train_loader, optimizer, criterion)
         test_loss, test_acc = evaluate(model, device, test_loader, criterion=criterion)
 
-        print(
-            f"Epoch {epoch+1}/{num_epochs} | "
-            f"Loss: {train_loss:.4f} | Train Acc: {train_acc:.2f}% | "
-            f"Test Loss: {test_loss:.4f} | Test Acc: {test_acc:.2f}%"
-        )
+        training_logger.log({
+            "run_type":     "training",
+
+            "dataset":      "mnist",
+            "model":        "cnn_mnist",
+
+            "seed":         args.seed,
+            "epoch":        int(epoch+1),
+            
+            "train_loss":       float(train_loss),
+            "train_accuracy":   float(train_acc),
+            "test_loss":        float(test_loss),
+            "test_accuracy":    float(test_acc)
+        })
 
     model_save_path = f'models/cnn_mnist_seed{args.seed}.pth'
     torch.save(model.state_dict(), model_save_path)
+
+    model_logger.log({
+        "run_type":     "model_save",
+        "device":       str(device),
+        "seed":         args.seed,
+
+        "model":        "cnn_mnist",
+        "path":         model_save_path,
+
+        "batch_size":       int(batch_size),
+        "num_epochs":       int(num_epochs),
+        "optimizer":        "adam",
+        "learning_rate":    learning_rate
+    })
+    
 
 if __name__ == '__main__':
     main()

@@ -7,12 +7,14 @@ import torch.optim as optim
 from model import CNN
 from attacks.registry import ATTACKS, MODELS
 from utils.data import get_mnist_train_loader, get_mnist_test_loader
-from utils.logging import log_epoch_adv
+from utils.logger import JSONLLogger
 
 base_model_path = 'models/cnn_mnist.pth'
 batch_size = 64
 epochs = 5
 learning_rate = 0.001
+
+logger = JSONLLogger("results/jsonl/adv_training.jsonl")
 
 def train_adversarial(model, device, train_loader, optimizer, criterion, attack_fn, epsilon):
     model.train()
@@ -93,13 +95,21 @@ def main():
             defense_model, device, train_loader, optimizer, criterion, attack_fn, args.epsilon
         )
         test_loss, test_acc = evaluate(defense_model, device, test_loader, criterion)
-        log_epoch_adv(
-            epoch,
-            train_loss,
-            clean_acc,
-            adv_acc,
-            test_acc
-        )
+        
+        logger.log({
+            "run_type":     "adv_training",
+
+            "seed":         args.seed,
+            
+            "attack":       args.attack,
+            "epsilon":      args.epsilon,
+            "epoch":        int(epoch),
+            
+            "train_loss":           float(train_loss),
+            "train_clean_accuracy": float(clean_acc),
+            "train_adv_accuracy":   float(adv_acc),
+            "test_clean_accuracy":  float(test_acc)
+        })
 
     torch.save(defense_model.state_dict(), save_path)
     print(f'\nModel saved to {save_path}')
