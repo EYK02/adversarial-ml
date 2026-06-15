@@ -6,11 +6,19 @@ Exploring adversarial attacks and defenses on a CNN image classifier trained on 
 
 A CNN is trained on the MNIST handwritten digit dataset and used as a target for adversarial attacks. Two attacks are implemented: FGSM (single-step) and PGD (iterative), and adversarial training is evaluated as a defense. The project explores how well defenses trained against one attack generalise to others, and how defense strength scales with training attack strength.
 
-**Baseline CNN Pipeline**
-![Base Pipeline](resources/baseline_cnn_pipeline.drawio.png)
+## Key Insights
+- FGSM and PGD attacks both reduce model accuracy significantly at higher epsilon values, but PGD is more destructive, pgd40 drops baseline accuracy to 16% at epsilon=0.20 vs 63% under FGSM
+- Adversarial training is highlt effective on MNIST as all trained defenses maintained an accuracy above 76% even under the strongest attack (pgd40, epsilon=0.30)
+- Accuracy scales with training attack 'strength': the model trained on pgd5 examples holds at 76.46% under pgd40 attack at epsilon=0.30, while the baseline model trained on pgd40 examples holds at 94.70%
+- Diminishing returns are clearly visible as the gap between the models trained on pgd20 and pgd40 examples show relatively small improvements (93.38% vs 94.70% at epsilon=0.30) considering the additional training cost
+- Cross-evaluation reveals that training against stronger attack methods produces more general robustness. The model trained on pgd40 examples generalizes to FGSM attack (96.62% at epsilon=0.30) than the model trained on FGSM examples generalized to pgd40 attack (84.63% at epsilon=0.30)
+- No robustness-accuracy tradeoffs were observed as all models maintained or slightly improved their clean accuracy (epsilon=0.0)
+- Results are specific to MNIST and this CNN architecture. Generalisation to harder datasets (e.g. CIFAR-10) is an open question
 
-**Adversarially trained CNN Pipeline**
-![Training Pipeline](resources/adversarial_training_pipeline.drawio.png)
+
+### Defense comparison plot
+**epsilon vs accuracy for different models (baseline, fgsm, pgd5-pgd40)**
+![Defense Comparison](results/images/defense_comparison.png)
 
 ## Model
 
@@ -25,6 +33,12 @@ A CNN is trained on the MNIST handwritten digit dataset and used as a target for
 - Learning rate = 0.001
 - Epochs = 5
 - Batch size = 64
+
+**Baseline CNN Pipeline**
+![Base Pipeline](resources/baseline_cnn_pipeline.drawio.png)
+
+**Adversarially trained CNN Pipeline**
+![Training Pipeline](resources/adversarial_training_pipeline.drawio.png)
 
 ## Results
 
@@ -123,8 +137,6 @@ Additional visualisations can be generated for any attack/model combination:
 ```bash
 python -m results.visualize_attacks --attack [fgsm|pgd5|pgd10|pgd20|pgd40] --model [base|fgsm|pgd5|pgd10|pgd20|pgd40]
 ```
-### Defense comparison plot
-![Defense Comparison](results/images/defense_comparison.png)
 
 ## Open questions and future extensions
 
@@ -178,6 +190,7 @@ python -m defenses.evaluate_defense --attack fgsm --defense fgsm
 python -m defenses.evaluate_defense --attack pgd40 --defense pgd5
 python -m defenses.evaluate_defense --attack pgd40 --defense pgd10
 python -m defenses.evaluate_defense --attack pgd40 --defense pgd20
+python -m defenses.evaluate_defense --attack pgd40 --defense pgd40
 ```
 
 Cross-evaluation:
