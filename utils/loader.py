@@ -1,7 +1,6 @@
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
-
 def get_mnist_test_loader(batch_size=64):
     transform = transforms.Compose([
         transforms.ToTensor(),

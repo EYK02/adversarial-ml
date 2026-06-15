@@ -2,7 +2,7 @@ import argparse
 import torch
 from model import CNN
 from attacks.registry import ATTACKS
-from utils import get_mnist_test_loader
+from utils.loader import get_mnist_test_loader
 
 base_model_path = 'models/cnn_mnist.pth'
 batch_size = 64
