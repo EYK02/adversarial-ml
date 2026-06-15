@@ -45,7 +45,9 @@ def main():
         base_acc = evaluate(base_model, device, test_loader, attack_fn, epsilon)
         def_acc = evaluate(defense_model, device, test_loader, attack_fn, epsilon)
         
-        _, _, _, delta, attack_success = compute_attack_metrics(epsilon, base_acc, def_acc).values()
+        metrics = compute_attack_metrics(epsilon, base_acc, def_acc)
+        delta = metrics["delta"]
+        attack_success = metrics["attack_success"]
 
         logger.log({
             "run_type":     "defense_eval",
@@ -58,7 +60,8 @@ def main():
 
             "baseline_accuracy":    float(base_acc),
             "defended_Accuracy":    float(def_acc),
-            "delta":                float(delta)
+            "delta":                float(delta),
+            "successful_attack":    float(attack_success)
         })
 
 
