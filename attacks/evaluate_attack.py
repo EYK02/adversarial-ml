@@ -5,7 +5,7 @@ from attacks.registry import ATTACKS
 from utils.data import get_mnist_test_loader
 from utils.config import EPSILONS
 from utils.reproducibility import set_seed
-from utils.evaluation import evaluate_adversarial
+from utils.evaluation import evaluate
 batch_size = 64
 
 def main():
@@ -34,7 +34,7 @@ def main():
     print("|------------|------------|")
 
     for epsilon in EPSILONS:
-        acc = evaluate_adversarial(model, device, test_loader, attack_fn, epsilon)
+        acc = evaluate(model, device, test_loader, attack_fn, epsilon)
         print(f"|{epsilon:<12.2f}|{acc:<.2f}%|")
 
 if __name__ == '__main__':

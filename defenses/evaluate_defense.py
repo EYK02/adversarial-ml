@@ -5,7 +5,7 @@ from attacks.registry import ATTACKS, MODELS
 from utils.data import get_mnist_test_loader
 from utils.config import EPSILONS
 from utils.reproducibility import set_seed
-from utils.evaluation import evaluate_adversarial, evaluate_clean
+from utils.evaluation import evaluate
 
 batch_size = 64
 
@@ -39,11 +39,10 @@ def main():
     print(f"|{'Epsilon':<12}|{'Baseline':<14}|{'Defended':<14}|{'Delta':<10}|{'Attack Accuracy':<12}|")
     print("|------------|--------------|--------------|------------|----------------|")
 
-    clean_acc = evaluate_clean(base_model, device, test_loader) # not used?
 
     for epsilon in EPSILONS:
-        base_acc = evaluate_adversarial(base_model, device, test_loader, attack_fn, epsilon)
-        def_acc = evaluate_adversarial(defense_model, device, test_loader, attack_fn, epsilon)
+        base_acc = evaluate(base_model, device, test_loader, attack_fn, epsilon)
+        def_acc = evaluate(defense_model, device, test_loader, attack_fn, epsilon)
         delta = def_acc - base_acc
         sign = "+" if delta >= 0 else ""
         base_str = f"{base_acc:.2f}%"
