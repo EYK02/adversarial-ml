@@ -1,3 +1,5 @@
+# defenses/evaluate_defense.py
+
 import argparse
 import torch
 from model import CNN
@@ -6,7 +8,9 @@ from utils.data import get_mnist_test_loader
 from utils.config import EPSILONS
 from utils.reproducibility import set_seed
 from utils.evaluation import evaluate
-from utils.logging import print_header, format_table_row, log_attack_results
+from utils.logging import print_header
+from utils.formatting import format_table_row
+from utils.metrics import compute_attack_metrics
 
 batch_size = 64
 
@@ -44,7 +48,7 @@ def main():
         base_acc = evaluate(base_model, device, test_loader, attack_fn, epsilon)
         def_acc = evaluate(defense_model, device, test_loader, attack_fn, epsilon)
         
-        _, _, _, delta, attack_success = log_attack_results(epsilon, base_acc, def_acc).values()
+        _, _, _, delta, attack_success = compute_attack_metrics(epsilon, base_acc, def_acc).values()
         print(format_table_row([f"{epsilon:.2f}", f"{base_acc:.2f}%", f"{def_acc:.2f}%", f"{delta:.2f}%", f"{attack_success:.2f}%"], widths))
 
 if __name__ == '__main__':

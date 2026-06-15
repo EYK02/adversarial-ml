@@ -1,35 +1,10 @@
 # utils/logging.py
 
-from typing import Optional
-
-def format_table_row(values, widths):
-    return "| " + " | ".join(
-        f"{str(v):<{w}}" for v, w in zip(values, widths)
-    ) + " |"
-
+from .formatting import format_table_row
 
 def print_header(columns, widths):
     print(format_table_row(columns, widths))
     print("|" + "|".join("-" * (w + 2) for w in widths) + "|")
-
-
-def log_attack_results(epsilon, base_acc, def_acc=None):
-    if def_acc is None:
-        return {
-            "epsilon": epsilon,
-            "accuracy": base_acc
-        }
-
-    delta = def_acc - base_acc
-    attack_success = 100.0 - base_acc
-
-    return {
-        "epsilon": epsilon,
-        "baseline": base_acc,
-        "defended": def_acc,
-        "delta": delta,
-        "attack_success": attack_success
-    }
 
 def log_epoch_adv(epoch, loss, clean_acc, adv_acc, test_acc=None):
     msg = (
@@ -42,4 +17,10 @@ def log_epoch_adv(epoch, loss, clean_acc, adv_acc, test_acc=None):
     if test_acc is not None:
         msg += f" | Test Clean: {test_acc:.2f}%"
 
+    log(msg)
+
+def log(msg, file=None):
     print(msg)
+    if file is not None:
+        with open(file, "a") as f:
+            f.write(msg + "\n")
