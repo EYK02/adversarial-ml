@@ -6,7 +6,10 @@ Exploring adversarial attacks and defenses on a CNN image classifier trained on 
 
 A CNN is trained on the MNIST handwritten digit dataset and used as a target for adversarial attacks. Two attacks are implemented: FGSM (single-step) and PGD (iterative), and adversarial training is evaluated as a defense. The project explores how well defenses trained against one attack generalise to others, and how defense strength scales with training attack strength.
 
+**Baseline CNN Pipeline**
 ![Base Pipeline](resources/baseline_cnn_pipeline.drawio.png)
+
+**Adversarially trained CNN Pipeline**
 ![Training Pipeline](resources/adversarial_training_pipeline.drawio.png)
 
 ## Model
