@@ -6,6 +6,7 @@ from utils.data import get_mnist_test_loader
 from utils.config import EPSILONS
 from utils.reproducibility import set_seed
 from utils.evaluation import evaluate
+from utils.logging import print_header, format_table_row
 batch_size = 64
 
 def main():
@@ -28,13 +29,14 @@ def main():
     attack_fn = ATTACKS[args.attack]
     test_loader = get_mnist_test_loader(batch_size)
 
-    print(f"Evaluating {args.attack.upper()} attack on base model\n")
-    print(f"|{'Epsilon':<12}|{'Accuracy':<12}|")
-    print("|------------|------------|")
+    # Logging
+    columns = ['Epsilon', 'Accuracy']
+    widths = [12, 12]
+    print_header(columns, widths)
 
     for epsilon in EPSILONS:
         acc = evaluate(model, device, test_loader, attack_fn, epsilon)
-        print(f"|{epsilon:<12.2f}|{acc:<.2f}%|")
+        print(format_table_row([f"{epsilon:.2f}", f"{acc:.2f}%"], widths))
 
 if __name__ == '__main__':
     main()

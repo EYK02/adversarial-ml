@@ -1,3 +1,4 @@
+# train.py
 import os
 import argparse
 import torch
@@ -53,7 +54,11 @@ def main():
         train_loss, train_acc = train(model, device, train_loader, optimizer, criterion)
         test_loss, test_acc = evaluate(model, device, test_loader, criterion=criterion)
 
-        print(f'Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%, Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.2f}%')
+        print(
+            f"Epoch {epoch+1}/{num_epochs} | "
+            f"Loss: {train_loss:.4f} | Train Acc: {train_acc:.2f}% | "
+            f"Test Loss: {test_loss:.4f} | Test Acc: {test_acc:.2f}%"
+        )
 
     model_save_path = f'models/cnn_mnist_seed{args.seed}.pth'
     torch.save(model.state_dict(), model_save_path)
