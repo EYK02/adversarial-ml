@@ -3,25 +3,11 @@ import torch
 from model import CNN
 from attacks.registry import ATTACKS, MODELS
 from utils.data import get_mnist_test_loader
+from utils.config import EPSILONS
 from utils.reproducibility import set_seed
+from utils.evaluation import evaluate_adversarial, evaluate_clean
 
 batch_size = 64
-epsilons = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
-
-def evaluate_model(model, device, loader, attack_fn, epsilon):
-    model.eval()
-    correct = 0
-    total = 0
-
-    for data, target in loader:
-        data, target = data.to(device), target.to(device)
-        adv_data = attack_fn(model, device, data, target, epsilon)
-        output = model(adv_data)
-        _, predicted = torch.max(output.data, 1)
-        total += target.size(0)
-        correct += (predicted == target).sum().item()
-
-    return 100 * correct / total
 
 def main():
     parser = argparse.ArgumentParser(description='Evaluate adversarial defense on MNIST')
@@ -50,19 +36,21 @@ def main():
     test_loader = get_mnist_test_loader(batch_size)
 
     print(f"Attack: {args.attack} | Defense: {args.defense}\n")
-    print(f"|{'Epsilon':<12}|{'Baseline':<14}|{'Defended':<14}|{'Delta':<10}|{'Attack Success':<12}|")
+    print(f"|{'Epsilon':<12}|{'Baseline':<14}|{'Defended':<14}|{'Delta':<10}|{'Attack Accuracy':<12}|")
     print("|------------|--------------|--------------|------------|----------------|")
 
-    for epsilon in epsilons:
-        base_acc = evaluate_model(base_model, device, test_loader, attack_fn, epsilon)
-        def_acc = evaluate_model(defense_model, device, test_loader, attack_fn, epsilon)
+    clean_acc = evaluate_clean(base_model, device, test_loader) # not used?
+
+    for epsilon in EPSILONS:
+        base_acc = evaluate_adversarial(base_model, device, test_loader, attack_fn, epsilon)
+        def_acc = evaluate_adversarial(defense_model, device, test_loader, attack_fn, epsilon)
         delta = def_acc - base_acc
         sign = "+" if delta >= 0 else ""
         base_str = f"{base_acc:.2f}%"
         def_str = f"{def_acc:.2f}%"
         delta_str = f"{sign}{abs(delta):.2f}%"
-        atk_succ_str = f"{100 - base_acc:.2f}%"
-        print(f"| {epsilon:<10.2f} | {base_str:<12} | {def_str:<12} | {delta_str:<10}| {atk_succ_str:<12}|")
+        atk_acc_str = f"{100 - base_acc:.2f}%"
+        print(f"| {epsilon:<10.2f} | {base_str:<12} | {def_str:<12} | {delta_str:<10}| {atk_acc_str:<12}|")
 
 if __name__ == '__main__':
     main()
