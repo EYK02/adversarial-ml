@@ -1,4 +1,6 @@
+# run_defense_eval.py
 
+import sys
 from utils.runner import Experiment, ExperimentRunner
 
 runner = ExperimentRunner()
@@ -10,7 +12,7 @@ for seed in range(5):
         Experiment(
             f"FGSM defense seed {seed}",
             [
-                "python",
+                sys.executable,
                 "-m",
                 "defenses.evaluate_defense",
                 "--attack",
