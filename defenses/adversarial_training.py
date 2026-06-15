@@ -58,7 +58,7 @@ def train_adversarial(model, device, train_loader, optimizer, criterion, attack_
 
 def main():
     parser = argparse.ArgumentParser(description='Adversarial training on MNIST')
-    parser.add_argument('--attack', type=str, default='fgsm', choices=ATTACKS.keys(),
+    parser.add_argument('--attack', type=str, default='fgsm',
                         help='Attack to train against')
     parser.add_argument('--epsilon', type=float, default=0.2,
                         help='Perturbation budget for adversarial training')
