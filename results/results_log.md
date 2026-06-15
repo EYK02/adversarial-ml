@@ -1,241 +1,218 @@
 # Results Log
 
-## FGSM Attack on baseline CNN
+## 1. Baseline CNN
 
-**Date:** 2026-06-14
-**Model:** CNN trained on MNIST, 98.68% clean accuracy
-**Attack:** Fast Gradient Sign Method (FGSM)
+**Date:** 2026-06-14  
+**Model:** CNN trained on MNIST  
+**Clean accuracy:** 98.68%
 
-|Epsilon|      Test Accuracy|
-|------------|--------------|
-|0.00|         98.68%|
-|0.05|         97.34%|
-|0.10|         94.54%|
-|0.15|         89.43%|
-|0.20|         82.18%|
-|0.25|         73.12%|
-|0.30|         63.30%|
+---
 
+## 2. FGSM Attack
 
+**Evaluation command:**
 ```bash
-python -m attacks.evaluate_attacks --attack fgsm
+python -m attacks.evaluate_attack --attack fgsm
 ```
 
-**Observations:**
-- Accuracy degrades gradually, but not linearly, and accelerates above epsilon=0.15
-- Drop from epsilon=0.0 -> 0.10 is 4.41pp, from epsilon=0.20 -> 0.30 is 18.88pp.
-
-**Open questions:**
-- At what epsilon do perturbations become visible to the human eye?
-- At what percentage is the model considered unreliable?
-- Does adversarial training improve accuracy uniformly across all epsilon values?
-- Are certain digits (0-9) classes more vulnerable than others to perturbations?
-
-## FGSM Visualization
+| Epsilon | Accuracy |
+|---------|----------|
+| 0.00    | 98.68%   |
+| 0.05    | 97.34%   |
+| 0.10    | 94.54%   |
+| 0.15    | 89.43%   |
+| 0.20    | 82.18%   |
+| 0.25    | 73.12%   |
+| 0.30    | 63.30%   |
 
 **Observations:**
-Perturbations appear as grey noise on the black background but cause minimal distortion of the digit itself. The digit remains visually recognizable to the human eye even at epsilon=0.30, yet accuracy of the model drops to 63%.
+- Accuracy degrades gradually but not linearly, accelerating above epsilon=0.15
+- Drop from epsilon=0.00 to 0.10 is 4.14pp vs 18.88pp from epsilon=0.20 to 0.30
 
-**Implications:**
-A human would still classify correctly where the model fails as to the human eye, the FGSM perturbations are only visible on a uniform background. This confirms that the adversarial vulnerability is model-specific, and not a perceptual ambiguity.
+**Visualisation observations:**
+- Perturbations appear as grey noise on the black background with minimal distortion of the digit itself
+- Digits remain visually recognisable to a human at epsilon=0.30, yet model accuracy drops to 63%
+- Adversarial vulnerability is model-specific, not a perceptual ambiguity — a human would still classify correctly where the model fails
 
-**Further questions:**
-- Would an attack concentrated on distorting the digit itself be more or less effective? Against humans, maybe, but maybe not against a model?
-- When the model misclassifies, are they random across the digits 0-9, or does it consistently confuse certain digits with specific others? (perhaps 1 and 7?)
-- Will the model's confidence decrease as epsilon increases, or does it stay high even when wrong?
+---
 
-## Adversarial Training Defense
+## 3. PGD Attack
 
-**Defense epsilon:** 0.20
-**Reason:**
-Accuracy drops below 90% at this range and perturbations become more noticeable.
-
-**Questions:**
-Does defense training against epsilon=0.20 generalize to other values of epsilon, especially at higher values that the model hasn't seen during training?
-
-## Defense Evaluation - FGSM adversarial Training at epsilon = 0.20
-
-*adversarial_training.py results*
-Epoch 1: Loss: 0.0592 | Train Clean: 99.52% | Train Adv: 96.44% | Test Clean: 99.13%
-Epoch 2: Loss: 0.0324 | Train Clean: 99.73% | Train Adv: 98.13% | Test Clean: 99.24%
-Epoch 3: Loss: 0.0246 | Train Clean: 99.79% | Train Adv: 98.53% | Test Clean: 98.94%
-Epoch 4: Loss: 0.0207 | Train Clean: 99.82% | Train Adv: 98.75% | Test Clean: 99.20%
-Epoch 5: Loss: 0.0145 | Train Clean: 99.89% | Train Adv: 99.08% | Test Clean: 99.20%
-
-*evaluate_defense.py results*
-|Epsilon      |Baseline       |Defended       |Delta     |
-| - | - | - | - |
-|0.0|          98.68%      |   99.20%|         +0.52      |
-|0.05|         97.34%     |    98.91% |        +1.57      |
-|0.1  |        94.54%    |     98.68%  |       +4.14     | 
-|0.15  |       89.43%   |      98.25%   |      +8.82    |  
-|0.2    |      82.18%  |       97.93%    |     +15.75  |   
-|0.25    |     73.12% |        97.57%     |    +24.45 |    
-|0.3      |    63.30%|         97.17%      |   +33.87|
-
-**Observations:**
-- Defense eliminates the majority of FGSM vulnerability across all epsilon values
-- Clean accuracy (epsilon=0.0) improved slightly
-- Generalization beyond training epsilon (0.20) seems strong as it is effective for at least epsilon=0.25 and 0.3
-- Delta grows with epsilon - defense is most valuable where base is weakest
-
-**Possible Caveats:**
-- Results may be over-tuned to FGSM and not be effective against other forms of adversarial attacks.
-- MNIST is a simple dataset and may not be applicable to harder tasks.
-- Near-perfect robustness from 5 epochs is unexpected and warrant further investigation.
-
-**Questions answered:**
-- Does adversarial training improve accuracy uniformly? Yes
-- Does defense generalise beyond training epsilon? Yes
-
-**Further questions:**
-- Are results FGSM-sepcific or general and robust? Test with other attacks (PGD, etc.)
-
-## PGD Attack Evaluation - alpha=0.01, steps=40
-|Epsilon     |Baseline      |Defended      |Delta     |
-|-|-|-|-|
-| 0.00       | 98.68       % | 99.20       % | +0.52    |
-| 0.05       | 95.99       % | 98.60       % | +2.61    |
-| 0.10       | 86.80       % | 97.41       % | +10.61   |
-| 0.15       | 68.48       % | 95.82       % | +27.34   |
-| 0.20       | 46.31       % | 92.76       % | +46.45   |
-| 0.25       | 28.82       % | 88.99       % | +60.17   |
-| 0.30       | 16.30       % | 84.42       % | +68.12   |
-
-**Observations:**
-- PGD stronger than FGSM. 16% vs 63% at epsilon=0.30
-- Defense against FGSM generalises meaningfully to PGD despite never seeing PGD during training.
-
-**Caveats:**
-- Defense not as effective under PGD than FGSM, thus not fully robust
-- Adversarial training against PGS would most likely improve PGD robustness further
-
-**Questions answered:**
-- Are FGSM defense attack-specific? No, it generalises to PGD
-- Is PGD stronger than FGSM? Yes
-
-**Further questions:**
-- Would adversarial training against PGD outperform FGSM adversarial training?
-- What is the optimal PGD steps, is 40 steps sufficient?
-- How does it vary with different alpha values?
-
-### PGD Attack Evaluation - steps=5, 10, 20
+**Evaluation commands:**
 ```bash
 python -m attacks.evaluate_attack --attack pgd5
 python -m attacks.evaluate_attack --attack pgd10
 python -m attacks.evaluate_attack --attack pgd20
+python -m attacks.evaluate_attack --attack pgd40
 ```
 
-**Results:**
-*steps=5*
-|Epsilon     |Accuracy    |
-|-|-|
-|0.00        |98.68%|
-|0.05        |97.05%|
-|0.10        |96.42%|
-|0.15        |95.99%|
-|0.20        |95.56%|
-|0.25        |94.95%|
-|0.30        |94.65%|
+| Epsilon | pgd5   | pgd10  | pgd20  | pgd40  |
+|---------|--------|--------|--------|--------|
+| 0.00    | 98.68% | 98.68% | 98.68% | 98.68% |
+| 0.05    | 97.05% | 96.17% | 96.05% | 95.99% |
+| 0.10    | 96.42% | 92.80% | 87.92% | 86.80% |
+| 0.15    | 95.99% | 90.72% | 78.29% | 68.48% |
+| 0.20    | 95.56% | 89.03% | 70.44% | 46.31% |
+| 0.25    | 94.95% | 87.30% | 62.94% | 28.82% |
+| 0.30    | 94.65% | 85.51% | 56.80% | 16.30% |
 
-*steps=10*
-|Epsilon     |Accuracy    |
-|-|-|
-|0.00        |98.68%|
-|0.05        |96.17%|
-|0.10        |92.80%|
-|0.15        |90.72%|
-|0.20        |89.03%|
-|0.25        |87.30%|
-|0.30        |85.51%|
+**Observations:**
+- PGD is substantially stronger than FGSM — pgd40 drops baseline to 16% at epsilon=0.30 vs 63% under FGSM
+- Attack strength scales with steps but non-linearly — the gap between 20 and 40 steps (56% to 16% at epsilon=0.30) is far larger than between 5 and 10 steps (94% to 85%)
+- pgd5 is a weak attack, barely degrading accuracy even at epsilon=0.30 (94.65%)
+- 40 steps is a meaningfully stronger evaluation than 20 — attack has not converged at 20 steps
 
-*steps=20*
-|Epsilon     |Accuracy    |
-|-|-|
-|0.00        |98.68%|
-|0.05        |96.05%|
-|0.10        |87.92%|
-|0.15        |78.29%|
-|0.20        |70.44%|
-|0.25        |62.94%|
-|0.30        |56.80%|
+---
 
-*steps=40*
-|Epsilon     |Baseline      |
-|-|-|
-| 0.00       | 98.68       % |
-| 0.05       | 95.99       % |
-| 0.10       | 86.80       % |
-| 0.15       | 68.48       % |
-| 0.20       | 46.31       % |
-| 0.25       | 28.82       % |
-| 0.30       | 16.30       % |
+## 4. FGSM Adversarial Training Defense
 
-### PGD Defense Evaluation - Attack:pgd10, Defense:pdg5, 10, 20
+**Training command:**
 ```bash
-python -m defenses.evaluate_defense --attack pgd10 --defense pgd5
-python -m defenses.evaluate_defense --attack pgd10 --defense pgd10
-python -m defenses.evaluate_defense --attack pgd10 --defense pgd20
+python -m defenses.adversarial_training --attack fgsm --epsilon 0.20
 ```
 
-*defense pgd5*
-|Epsilon     |Baseline      |Defended      |Delta     |
-|-|-|-|-|
-| 0.00       | 98.68%       | 98.96%       | +0.28%    |
-| 0.05       | 96.16%       | 98.15%       | +1.99%    |
-| 0.10       | 92.94%       | 97.45%       | +4.51%    |
-| 0.15       | 90.61%       | 97.18%       | +6.57%    |
-| 0.20       | 88.93%       | 96.99%       | +8.06%    |
-| 0.25       | 87.43%       | 96.59%       | +9.16%    |
-| 0.30       | 85.77%       | 96.32%       | +10.55%   |
+**Rationale for epsilon=0.20:** Accuracy drops below 90% at this range and perturbations become more noticeable to the human eye.
 
-*defense pgd10*
-|Epsilon     |Baseline      |Defended      |Delta     |
-|-|-|-|-|
-| 0.00       | 98.68%       | 99.15%       | +0.47%    |
-| 0.05       | 96.18%       | 98.62%       | +2.44%    |
-| 0.10       | 92.79%       | 98.25%       | +5.46%    |
-| 0.15       | 90.72%       | 98.08%       | +7.36%    |
-| 0.20       | 88.87%       | 97.98%       | +9.11%    |
-| 0.25       | 87.18%       | 97.73%       | +10.55%   |
-| 0.30       | 85.56%       | 97.63%       | +12.07%   |
+**Training results:**
 
-*defense pgd20*
-|Epsilon     |Baseline      |Defended      |Delta     |
-|-|-|-|-|
-| 0.00       | 98.68%       | 99.13%       | +0.45%    |
-| 0.05       | 96.19%       | 98.69%       | +2.50%    |
-| 0.10       | 92.95%       | 98.40%       | +5.45%    |
-| 0.15       | 90.78%       | 98.36%       | +7.58%    |
-| 0.20       | 89.11%       | 98.29%       | +9.18%    |
-| 0.25       | 87.29%       | 98.25%       | +10.96%   |
-| 0.30       | 85.41%       | 98.08%       | +12.67%   |
+| Epoch | Loss   | Train Clean | Train Adv | Test Clean |
+|-------|--------|-------------|-----------|------------|
+| 1     | 0.0592 | 99.52%      | 96.44%    | 99.13%     |
+| 2     | 0.0324 | 99.73%      | 98.13%    | 99.24%     |
+| 3     | 0.0246 | 99.79%      | 98.53%    | 98.94%     |
+| 4     | 0.0207 | 99.82%      | 98.75%    | 99.20%     |
+| 5     | 0.0145 | 99.89%      | 99.08%    | 99.20%     |
 
-### Cross-evaluation - PGD defenses against FGSM and vice versa
+**Observations:**
+- Gap between clean and adversarial training accuracy closed from 3.08pp (epoch 1) to 0.81pp (epoch 5)
+- Clean test accuracy unchanged — no robustness/accuracy tradeoff observed
+- Near-perfect robustness from 5 epochs of fine-tuning is unexpected and warrants further investigation
+
+### 4a. FGSM Defense vs FGSM Attack
+
+**Evaluation command:**
 ```bash
-python -m defenses.evaluate_defense --attack fgsm --defense pgd10
-python -m defenses.evaluate_defense --attack pgd10 --defense fgsm
+python -m defenses.evaluate_defense --attack fgsm --defense fgsm
 ```
-**Results:**
 
-*attack: fgsm, defense: pdg10*
-|Epsilon     |Baseline      |Defended      |Delta     |
-|-|-|-|-|
-| 0.00       | 98.68%       | 99.15%       | +0.47%    |
-| 0.05       | 97.34%       | 98.73%       | +1.39%    |
-| 0.10       | 94.54%       | 98.36%       | +3.82%    |
-| 0.15       | 89.43%       | 97.72%       | +8.29%    |
-| 0.20       | 82.18%       | 96.95%       | +14.77%   |
-| 0.25       | 73.12%       | 95.70%       | +22.58%   |
-| 0.30       | 63.30%       | 94.21%       | +30.91%   |
+| Epsilon | Baseline | Defended | Delta    |
+|---------|----------|----------|----------|
+| 0.00    | 98.68%   | 99.20%   | +0.52%   |
+| 0.05    | 97.34%   | 98.91%   | +1.57%   |
+| 0.10    | 94.54%   | 98.68%   | +4.14%   |
+| 0.15    | 89.43%   | 98.25%   | +8.82%   |
+| 0.20    | 82.18%   | 97.93%   | +15.75%  |
+| 0.25    | 73.12%   | 97.57%   | +24.45%  |
+| 0.30    | 63.30%   | 97.17%   | +33.87%  |
 
-*attack:pgd10, defense: fgsm*
-|Epsilon     |Baseline      |Defended      |Delta     |
-|-|-|-|-|
-| 0.00       | 98.68%       | 99.20%       | +0.52%    |
-| 0.05       | 96.19%       | 98.61%       | +2.42%    |
-| 0.10       | 92.87%       | 98.11%       | +5.24%    |
-| 0.15       | 90.82%       | 97.71%       | +6.89%    |
-| 0.20       | 88.96%       | 97.52%       | +8.56%    |
-| 0.25       | 87.41%       | 97.34%       | +9.93%    |
-| 0.30       | 85.35%       | 97.05%       | +11.70%   |
+**Observations:**
+- Defense nearly eliminates FGSM vulnerability across all epsilon values
+- Generalisation beyond training epsilon (epsilon=0.20) is strong — effective at epsilon=0.25 and epsilon=0.30
+- Delta grows with epsilon — defense most valuable where baseline is weakest
+
+### 4b. FGSM Defense vs PGD Attack (steps=40)
+
+**Evaluation command:**
+```bash
+python -m defenses.evaluate_defense --attack pgd40 --defense fgsm
+```
+
+| Epsilon | Baseline | Defended | Delta    |
+|---------|----------|----------|----------|
+| 0.00    | 98.68%   | 99.20%   | +0.52%   |
+| 0.05    | 96.01%   | 98.60%   | +2.59%   |
+| 0.10    | 86.89%   | 97.41%   | +10.52%  |
+| 0.15    | 68.20%   | 95.82%   | +27.62%  |
+| 0.20    | 46.03%   | 92.87%   | +46.84%  |
+| 0.25    | 28.55%   | 88.98%   | +60.43%  |
+| 0.30    | 16.30%   | 84.63%   | +68.33%  |
+
+**Observations:**
+- FGSM defense generalises meaningfully to PGD despite never seeing PGD during training
+- Defense less effective under PGD than FGSM — drops to 84.63% vs 97.17% at epsilon=0.30
+- Still does substantial work pulling model from near-random (16%) to useful (84%)
+
+---
+
+## 5. PGD Adversarial Training Defense
+
+**Training commands:**
+```bash
+python -m defenses.adversarial_training --attack pgd5 --epsilon 0.15
+python -m defenses.adversarial_training --attack pgd10 --epsilon 0.15
+python -m defenses.adversarial_training --attack pgd20 --epsilon 0.15
+python -m defenses.adversarial_training --attack pgd40 --epsilon 0.15
+```
+
+**Rationale for epsilon=0.15:** PGD is a stronger attack — baseline drops below 90% earlier than FGSM, making epsilon=0.15 the equivalent stress point.
+
+### 5a. PGD Defenses vs PGD40 Attack
+
+**Evaluation commands:**
+```bash
+python -m defenses.evaluate_defense --attack pgd40 --defense pgd5
+python -m defenses.evaluate_defense --attack pgd40 --defense pgd10
+python -m defenses.evaluate_defense --attack pgd40 --defense pgd20
+python -m defenses.evaluate_defense --attack pgd40 --defense pgd40
+```
+
+| Epsilon | Baseline | pgd5 def | pgd10 def | pgd20 def | pgd40 def |
+|---------|----------|----------|-----------|-----------|-----------|
+| 0.00    | 98.68%   | 98.96%   | 99.15%    | 99.13%    | 99.06%    |
+| 0.05    | 95.99%   | 98.14%   | 98.59%    | 98.66%    | 98.60%    |
+| 0.10    | 86.87%   | 96.66%   | 97.69%    | 98.16%    | 97.99%    |
+| 0.15    | 68.34%   | 94.15%   | 96.46%    | 97.30%    | 97.36%    |
+| 0.20    | 46.25%   | 89.66%   | 94.14%    | 96.30%    | 96.72%    |
+| 0.25    | 28.71%   | 83.73%   | 91.01%    | 94.78%    | 95.60%    |
+| 0.30    | 16.29%   | 76.46%   | 86.95%    | 93.38%    | 94.70%    |
+
+**Key findings:** Any adersarial training is clearly better than none. We can see that for the MNIST dataset, running more iterations or steps in the training data does not contribute to any substantial improvement to accuracy, even at higher epsilon. For twice the number of iterations (steps=20 to 40) we see a delta of +1.32% between pgd20 and pgd40 (epsilon=0.30).
+
+**Caveats:** Results may vary if similar training and evaluation is applied to a harder dataset such as CIFAR-10.
+
+---
+
+## 6. Cross-Evaluation
+
+**Evaluation commands:**
+```bash
+python -m defenses.evaluate_defense --attack fgsm --defense pgd40
+python -m defenses.evaluate_defense --attack pgd40 --defense fgsm
+```
+
+| Epsilon | fgsm def / pgd40 atk | pgd40 def / fgsm atk |
+|---------|----------------------|----------------------|
+| 0.00    | 99.20%               | 99.06%               |
+| 0.05    | 98.60%               | 98.75%               |
+| 0.10    | 97.41%               | 98.44%               |
+| 0.15    | 95.82%               | 97.97%               |
+| 0.20    | 92.87%               | 97.58%               |
+| 0.25    | 88.98%               | 97.19%               |
+| 0.30    | 84.63%               | 96.62%               |
+
+**Key finding:** PGD40-trained defense generalises better to FGSM (96.62% at epsilon=0.30) than FGSM-trained defense generalises to PGD40 (84.63%). Training against a stronger, more thorough attack produces more general robustness.
+
+---
+
+## 7. Open Questions
+
+- At what percentage is a model considered unreliable?
+- Are certain digit classes more vulnerable than others to perturbations?
+- When misclassifying, does the model confuse specific digit pairs consistently (e.g. 1 and 7)?
+- Does model confidence decrease as epsilon increases, or stay high even when wrong?
+- Would an attack concentrated on digit pixels rather than background be more effective?
+- Why does PGD defense generalise better to FGSM than FGSM defense generalises to PGD — is training attack strength the determining factor?
+- Does the marginal improvement from more PGD training steps justify the training time cost in practice?
+- Why does adversarial training in improve clena accuracy (epsilon=0.0), is this a regularisation effect?
+- Would these results hold on a harder dataset like CIFAR-10?
+
+---
+
+## 8. Caveats
+
+- MNIST is a simple dataset and results may not generalise to harder tasks or different architectures
+- All defenses show near-perfect robustness against FGSM, which is unexpectedly strong and warrants further investigation, particularly whether this holds on harder datasets
+- PGD defense generalises better across attack types than FGSM defense, suggesting training attack strength is a meaningful factor in robustness generalisation — but this conclusion is based on one architecture and one dataset
+- Small baseline variance (~0.03%) across PGD runs due to random initialisation, but does not affect conclusions
+- Results are specific to this CNN architecture and may differ with deeper or more complex models
+- PGD attack has not fully converged at 40 steps for all epsilon values — a stronger evaluation might require more steps at higher epsilon
