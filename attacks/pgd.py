@@ -2,26 +2,37 @@
 
 import torch
 import torch.nn as nn
+import torch
+import torch.nn as nn
 
-def pgd_attack(model, device,images, labels, epsilon, alpha=0.01, iters=40):
+def pgd_attack(model, device, images, labels, epsilon, steps=40):
+    alpha = min(0.01, epsilon / steps)
     images = images.clone().detach().to(device)
     labels = labels.clone().detach().to(device)
 
-    adv_images = images.clone().detach()
-    adv_images = adv_images + torch.empty_like(adv_images).uniform_(-epsilon, epsilon)
-    adv_images = torch.clamp(adv_images, min=-1, max=1).detach()
-    
-    for i in range(iters):
-        adv_images.requires_grad = True
+    # random start
+    adv_images = images + torch.empty_like(images).uniform_(-epsilon, epsilon)
+    adv_images = torch.clamp(adv_images, -1, 1).detach()
+
+    loss_fn = nn.CrossEntropyLoss()
+
+    for _ in range(steps):
+        adv_images = adv_images.detach().requires_grad_(True)
+
         outputs = model(adv_images)
+        loss = loss_fn(outputs, labels)
 
         model.zero_grad()
-        cost = nn.CrossEntropyLoss()(outputs, labels)
-        cost.backward()
+        if adv_images.grad is not None:
+            adv_images.grad.zero_()
 
-        with torch.no_grad():
-            adv_images = adv_images + alpha*adv_images.grad.sign()
-            perturbation = torch.clamp(adv_images - images, min=-epsilon, max=epsilon)
-            adv_images = torch.clamp(images + perturbation, min=-1, max=1).detach()
-    
+        loss.backward()
+
+        # gradient step
+        adv_images = adv_images + alpha * adv_images.grad.sign()
+
+        # projection back to epsilon ball
+        perturbation = torch.clamp(adv_images - images, -epsilon, epsilon)
+        adv_images = torch.clamp(images + perturbation, -1, 1).detach()
+
     return adv_images
