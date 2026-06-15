@@ -2,18 +2,19 @@ import argparse
 import torch
 from model import CNN
 from attacks.registry import ATTACKS
-from utils.loader import get_mnist_test_loader
+from utils.data import get_mnist_test_loader
+from utils.reproducibility import set_seed
 
 base_model_path = 'models/cnn_mnist.pth'
 batch_size = 64
 epsilons = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
 
-def evaluate(model, device, test_loader, attack_fn, epsilon):
+def evaluate_model(model, device, loader, attack_fn, epsilon):
     model.eval()
     correct = 0
     total = 0
 
-    for data, target in test_loader:
+    for data, target in loader:
         data, target = data.to(device), target.to(device)
         adv_data = attack_fn(model, device, data, target, epsilon)
         output = model(adv_data)
@@ -27,12 +28,17 @@ def main():
     parser = argparse.ArgumentParser(description='Evaluate adversarial attack on MNIST')
     parser.add_argument('--attack', type=str, default='fgsm', choices=ATTACKS.keys(),
                         help='Attack to evaluate')
+    parser.add_argument('--seed', type=int, default=0, help='Random seed for reproducibility')
+    parser.add_argument('--base_model_path', type=str, default='models/cnn_mnist_seed0.pth', help='Path to the base model')
+
     args = parser.parse_args()
+
+    set_seed(args.seed)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     model = CNN().to(device)
-    model.load_state_dict(torch.load(base_model_path, map_location=device))
+    model.load_state_dict(torch.load(args.base_model_path, map_location=device))
     model.eval()
 
     attack_fn = ATTACKS[args.attack]
@@ -40,10 +46,10 @@ def main():
 
     print(f"Evaluating {args.attack.upper()} attack on base model\n")
     print(f"|{'Epsilon':<12}|{'Accuracy':<12}|")
-    print("|-|-|")
+    print("|------------|------------|")
 
     for epsilon in epsilons:
-        acc = evaluate(model, device, test_loader, attack_fn, epsilon)
+        acc = evaluate_model(model, device, test_loader, attack_fn, epsilon)
         print(f"|{epsilon:<12.2f}|{acc:<.2f}%|")
 
 if __name__ == '__main__':

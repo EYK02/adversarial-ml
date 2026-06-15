@@ -1,23 +1,22 @@
 import os
-os.makedirs('models', exist_ok=True)
 import argparse
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from model import CNN
-from utils.loader import get_mnist_train_loader, get_mnist_test_loader
+from utils.data import get_mnist_train_loader, get_mnist_test_loader
 from utils.reproducibility import set_seed
 
 batch_size = 64
 learning_rate = 0.001
 num_epochs = 5
 
-def train(model, device, train_loader, optimizer, criterion):
+def train(model, device, loader, optimizer, criterion):
     model.train()
     total_loss = 0
     correct = 0
 
-    for images, labels in train_loader:
+    for images, labels in loader:
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
         outputs = model(images)
@@ -29,8 +28,8 @@ def train(model, device, train_loader, optimizer, criterion):
         _, predicted = torch.max(outputs.data, 1)
         correct += (predicted == labels).sum().item()
     
-    avg_loss = total_loss / len(train_loader)
-    accuracy = 100. * correct / len(train_loader.dataset)
+    avg_loss = total_loss / len(loader)
+    accuracy = 100. * correct / len(loader.dataset)
     return avg_loss, accuracy
 
 def evaluate(model, device, test_loader, criterion):
@@ -53,13 +52,15 @@ def evaluate(model, device, test_loader, criterion):
     return avg_loss, accuracy
 
 def main():
+    os.makedirs('models', exist_ok=True)
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', type=int, default=0, help='Random seed for reproducibility')
     args = parser.parse_args()
     set_seed(args.seed)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    train_loader = get_mnist_train_loader(batch_size)
+    train_loader = get_mnist_train_loader(batch_size, seed=args.seed)
     test_loader = get_mnist_test_loader(batch_size)
 
     model = CNN().to(device)

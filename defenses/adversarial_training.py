@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 from model import CNN
 from attacks.registry import ATTACKS, MODELS
-from utils.loader import get_mnist_train_loader, get_mnist_test_loader
+from utils.data import get_mnist_train_loader, get_mnist_test_loader
 
 base_model_path = 'models/cnn_mnist.pth'
 batch_size = 64
