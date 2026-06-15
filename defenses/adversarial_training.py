@@ -5,16 +5,18 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from model import CNN
-from attacks.registry import ATTACKS, MODELS
+from attacks.registry import ATTACKS
 from utils.data import get_mnist_train_loader, get_mnist_test_loader
 from utils.logger import JSONLLogger
+from utils.reproducibility import set_seed
+from utils.evaluation import evaluate
 
-base_model_path = 'models/cnn_mnist.pth'
 batch_size = 64
 epochs = 5
 learning_rate = 0.001
 
-logger = JSONLLogger("results/jsonl/adv_training.jsonl")
+training_logger = JSONLLogger("results/jsonl/adv_training.jsonl")
+model_logger = JSONLLogger("results/jsonl/model_save.jsonl")
 
 def train_adversarial(model, device, train_loader, optimizer, criterion, attack_fn, epsilon):
     model.train()
@@ -50,34 +52,22 @@ def train_adversarial(model, device, train_loader, optimizer, criterion, attack_
     adv_acc = 100 * correct_adv / len(train_loader.dataset)
     return avg_loss, clean_acc, adv_acc
 
-def evaluate(model, device, test_loader, criterion):
-    model.eval()
-    test_loss = 0
-    correct = 0
-
-    with torch.no_grad():
-        for data, target in test_loader:
-            data, target = data.to(device), target.to(device)
-            output = model(data)
-            test_loss += criterion(output, target).item()
-            _, predicted = torch.max(output.data, 1)
-            correct += (predicted == target).sum().item()
-
-    avg_loss = test_loss / len(test_loader)
-    accuracy = 100 * correct / len(test_loader.dataset)
-    return avg_loss, accuracy
-
 def main():
     parser = argparse.ArgumentParser(description='Adversarial training on MNIST')
     parser.add_argument('--attack', type=str, default='fgsm', choices=ATTACKS.keys(),
                         help='Attack to train against')
     parser.add_argument('--epsilon', type=float, default=0.2,
                         help='Perturbation budget for adversarial training')
+    parser.add_argument('--seed', type=int, default=0, 
+                        help='Random seed for reproducibility')
     args = parser.parse_args()
+
+    set_seed(args.seed)
+    base_model_path = f'models/cnn_mnist_seed{args.seed}.pth'
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    train_loader = get_mnist_train_loader(batch_size)
+    train_loader = get_mnist_train_loader(batch_size, seed=args.seed)
     test_loader = get_mnist_test_loader(batch_size)
 
     defense_model = CNN().to(device)
@@ -87,16 +77,16 @@ def main():
     criterion = nn.CrossEntropyLoss()
 
     attack_fn = ATTACKS[args.attack]
-    save_path = f'models/adv_{args.attack}_epsilon_{args.epsilon}.pth'
+    save_path = f'models/adv_{args.attack}_eps_{args.epsilon}_seed{args.seed}.pth'
     print(f"Adversarial training — attack={args.attack}, epsilon={args.epsilon}\n")
 
     for epoch in range(1, epochs + 1):
         train_loss, clean_acc, adv_acc = train_adversarial(
             defense_model, device, train_loader, optimizer, criterion, attack_fn, args.epsilon
         )
-        test_loss, test_acc = evaluate(defense_model, device, test_loader, criterion)
+        test_loss, test_acc = evaluate(defense_model, device, test_loader, criterion=criterion)
         
-        logger.log({
+        training_logger.log({
             "run_type":     "adv_training",
 
             "seed":         args.seed,
@@ -113,6 +103,18 @@ def main():
 
     torch.save(defense_model.state_dict(), save_path)
     print(f'\nModel saved to {save_path}')
+
+    model_logger.log({
+        "run_type": "model_save",
+
+        "seed": args.seed,
+
+        "attack": args.attack,
+        "epsilon": args.epsilon,
+
+        "model": "adv_cnn_mnist",
+        "model_path": save_path
+    })
 
 if __name__ == '__main__':
     main()
