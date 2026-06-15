@@ -10,6 +10,8 @@ from utils.reproducibility import set_seed
 from utils.evaluation import evaluate
 from utils.logger import JSONLLogger
 from utils.modeling import load_model
+from attacks.registry import get_attack_fn
+
 batch_size = 64
 
 logger = JSONLLogger("results/jsonl/attack_eval.jsonl")
@@ -17,6 +19,7 @@ logger = JSONLLogger("results/jsonl/attack_eval.jsonl")
 def main():
     parser = argparse.ArgumentParser(description='Evaluate adversarial attack on MNIST')
     parser.add_argument('--attack', type=str, default='fgsm', choices=ATTACKS.keys(), help='Attack to evaluate')
+    parser.add_argument('--steps', type=int, default=5, help="PGD step count")
     parser.add_argument('--seed', type=int, default=0, help='Random seed for reproducibility')
     args = parser.parse_args()
     set_seed(args.seed)
@@ -25,7 +28,12 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = load_model(base_model_path, device)
 
-    attack_fn = ATTACKS[args.attack]
+    attack_params = {
+        "steps": None
+    }
+
+    attack_fn, attack_params = get_attack_fn(args.attack, args)
+
     test_loader = get_mnist_test_loader(batch_size)
 
     for epsilon in EPSILONS:
@@ -43,12 +51,15 @@ def main():
             "model_path":   base_model_path,
             "dataset":      "mnist",
             "attack":       args.attack,
+            "attack_params": attack_params,
             "epsilon":      float(epsilon),
             "metric":       "accuracy",
             "value":        float(acc),
-            "duration_sec":     duration,
+            "duration_sec": duration,
             "seed":         args.seed
         })
+
+
 
 if __name__ == '__main__':
     main()
