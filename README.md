@@ -62,16 +62,16 @@ This shows that adversarial training against FGSM provided partial but still mea
 
 ## Visualizations
 ### Baseline model under FGSM attack
-![FGSM Baseline](results/fgsm_base_visualization.png)
+![FGSM Baseline](results/images/fgsm_base_visualization.png)
 
 ### Adversarially trained model under FGSM attack
-![FGSM Defended](results/fgsm_fgsm_defended_visualization.png)
+![FGSM Defended](results/images/fgsm_fgsm_defended_visualization.png)
 
 ### Baseline model under PGD attack
-![PGD Baseline](results/pgd_base_visualization.png)
+![PGD Baseline](results/images/pgd40_base_visualization.png)
 
 ### Adversarially trained model (using FGSM) under PGD attack
-![PGD Defended](results/pgd_fgsm_defended_visualization.png)
+![PGD Defended](results/images/pgd40_fgsm_visualization.png)
 
 
 Visualize attack:
