@@ -10,8 +10,7 @@ batch_size = 64
 
 def main():
     parser = argparse.ArgumentParser(description='Evaluate adversarial attack on MNIST')
-    parser.add_argument('--attack', type=str, default='fgsm', choices=ATTACKS.keys(),
-                        help='Attack to evaluate')
+    parser.add_argument('--attack', type=str, default='fgsm', choices=ATTACKS.keys(), help='Attack to evaluate')
     parser.add_argument('--seed', type=int, default=0, help='Random seed for reproducibility')
 
     args = parser.parse_args()

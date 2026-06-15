@@ -1,6 +1,5 @@
 # utils/evaluation.py
 import torch
-
 def evaluate(model, device, loader, attack_fn=None, epsilon=None, criterion=None):
     model.eval()
 
@@ -11,13 +10,13 @@ def evaluate(model, device, loader, attack_fn=None, epsilon=None, criterion=None
     use_loss = criterion is not None
     use_attack = attack_fn is not None
 
-    with torch.no_grad():
-        for x, y in loader:
-            x, y = x.to(device), y.to(device)
+    for x, y in loader:
+        x, y = x.to(device), y.to(device)
 
-            if use_attack:
-                x = attack_fn(model, device, x, y, epsilon)
+        if use_attack:
+            x = attack_fn(model, device, x, y, epsilon)
 
+        with torch.no_grad():
             out = model(x)
 
             if use_loss:
