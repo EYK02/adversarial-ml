@@ -5,7 +5,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from model import CNN
 from attacks.registry import ATTACKS, MODELS
-from utils.loader import get_mnist_test_loader
+from utils.data import get_mnist_test_loader
+from utils.reproducibility import set_seed
 
 epsilons = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
 
@@ -65,7 +66,10 @@ def main():
                         help='Attack to visualise')
     parser.add_argument('--model', type=str, default='base', choices=MODELS.keys(),
                         help='Model to attack')
+    parser.add_argument('--seed', type=int, default=0, help='Random seed for reproducibility')
     args = parser.parse_args()
+
+    set_seed(args.seed)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
