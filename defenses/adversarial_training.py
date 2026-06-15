@@ -128,7 +128,7 @@ def main():
         "attack": args.attack,
         "epsilon": args.epsilon,
 
-        "duration": duration,
+        "duration_sec": duration,
 
         "model": "adv_cnn_mnist",
         "model_path": save_path

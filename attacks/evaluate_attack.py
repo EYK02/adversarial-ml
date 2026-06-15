@@ -2,6 +2,7 @@
 
 import argparse
 import torch
+import time
 from attacks.registry import ATTACKS
 from utils.data import get_mnist_test_loader
 from utils.config import EPSILONS
@@ -28,7 +29,14 @@ def main():
     test_loader = get_mnist_test_loader(batch_size)
 
     for epsilon in EPSILONS:
+        torch.cuda.synchronize() if torch.cuda.is_available() else None
+        start_time = time.perf_counter()        
+        
         acc = evaluate(model, device, test_loader, attack_fn, epsilon)
+
+        torch.cuda.synchronize() if torch.cuda.is_available() else None
+        duration = time.perf_counter() - start_time
+
         logger.log({
             "run_type":     "attack_eval",
             "model":        "cnn_mnist",
@@ -38,6 +46,7 @@ def main():
             "epsilon":      float(epsilon),
             "metric":       "accuracy",
             "value":        float(acc),
+            "duration_sec":     duration,
             "seed":         args.seed
         })
 
