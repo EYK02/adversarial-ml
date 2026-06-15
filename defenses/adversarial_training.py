@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from model import CNN
-from attacks.registry import ATTACKS
+from attacks.registry import get_attack_fn
 from utils.data import get_mnist_train_loader, get_mnist_test_loader
 from utils.logger import JSONLLogger
 from utils.reproducibility import set_seed
@@ -87,7 +87,7 @@ def main():
     optimizer = optim.Adam(defense_model.parameters(), lr=learning_rate)
     criterion = nn.CrossEntropyLoss()
 
-    attack_fn = ATTACKS[args.attack]
+    attack_fn, attack_params = get_attack_fn(args.attack, steps=args.steps)
     save_path = f'models/adv_{args.attack}_eps_{args.epsilon}_seed{args.seed}.pth'
     print(f"Adversarial training — attack={args.attack}, epsilon={args.epsilon}\n")
 
@@ -126,6 +126,7 @@ def main():
         "seed": args.seed,
 
         "attack": args.attack,
+        "attack_params": attack_params,
         "epsilon": args.epsilon,
 
         "duration_sec": duration,
