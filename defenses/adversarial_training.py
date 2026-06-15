@@ -1,3 +1,5 @@
+# defenses/adversarial_training.py
+
 import argparse
 import torch
 import torch.nn as nn
@@ -5,6 +7,7 @@ import torch.optim as optim
 from model import CNN
 from attacks.registry import ATTACKS, MODELS
 from utils.data import get_mnist_train_loader, get_mnist_test_loader
+from utils.logging import log_epoch_adv
 
 base_model_path = 'models/cnn_mnist.pth'
 batch_size = 64
@@ -82,8 +85,7 @@ def main():
     criterion = nn.CrossEntropyLoss()
 
     attack_fn = ATTACKS[args.attack]
-    save_path = MODELS[args.attack]
-
+    save_path = f'models/adv_{args.attack}_epsilon_{args.epsilon}.pth'
     print(f"Adversarial training — attack={args.attack}, epsilon={args.epsilon}\n")
 
     for epoch in range(1, epochs + 1):
@@ -91,7 +93,13 @@ def main():
             defense_model, device, train_loader, optimizer, criterion, attack_fn, args.epsilon
         )
         test_loss, test_acc = evaluate(defense_model, device, test_loader, criterion)
-        print(f'Epoch {epoch}: Loss: {train_loss:.4f} | Train Clean: {clean_acc:.2f}% | Train Adv: {adv_acc:.2f}% | Test Clean: {test_acc:.2f}%')
+        log_epoch_adv(
+            epoch,
+            train_loss,
+            clean_acc,
+            adv_acc,
+            test_acc
+        )
 
     torch.save(defense_model.state_dict(), save_path)
     print(f'\nModel saved to {save_path}')
