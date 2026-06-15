@@ -149,6 +149,19 @@ python -m results.visualize_attacks --attack [fgsm|pgd5|pgd10|pgd20|pgd40] --mod
 - Would these results hold on a harder dataset like CIFAR-10?
 - Would curriculum adversarial training (FGSM then PGD) outperform single-attack training, does the order matter, and is the added resources worth it?
 
+## Dataframe schema
+
+run_id
+model
+dataset
+attack
+epsilon
+seed
+step
+value
+runtime_sec
+timestamp
+
 ## Setup
 
 ```bash
