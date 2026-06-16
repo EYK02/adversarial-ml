@@ -9,6 +9,10 @@ from analysis.aggregate import (
     step_complexity,
     best_accuracy,
     training_final,
+    defense_summary,
+    defense_delta_summary,
+    defense_seed_variance,
+    crosseval_pivot,
 )
 from analysis.plots import (
     plot_training_curves,
@@ -60,7 +64,7 @@ def main():
     best_accuracy(attack_df).to_csv(CSV_DIR / "best_accuracy.csv", index=False)
 
     # ── seed variance ────────────────────────────────────────────
-    print("Seed variance...")
+    print("\nSeed variance...")
     _save_fig(plot_seed_variance_fgsm(attack_df), "seed_variance_fgsm.png")
     _save_fig(plot_seed_variance_pgd(attack_df),  "seed_variance_pgd.png")
     variance = seed_variance(attack_df)
@@ -104,7 +108,16 @@ def main():
             )
 
         print("Defense summary tables...")
-        seed_variance(defense_df).to_csv(CSV_DIR / "defense_seed_variance.csv", index=False)
+        defense_summary(defense_df).to_csv(CSV_DIR / "defense_summary.csv", index=False)
+        defense_delta_summary(defense_df).to_csv(CSV_DIR / "defense_delta_summary.csv", index=False)
+        defense_seed_variance(defense_df).to_csv(CSV_DIR / "defense_seed_variance.csv", index=False)
+
+        print("Cross-evaluation pivot tables...")
+        for eps in [0.1, 0.2, 0.3]:
+            pivot = crosseval_pivot(defense_df, epsilon=eps)
+            pivot.to_csv(CSV_DIR / f"crosseval_pivot_eps{int(eps * 100):02d}.csv")
+            print(f"\n  Cross-eval at ε={eps:.1f}:")
+            print(pivot.to_string())
 
     print(f"\nDone. Outputs in {ARTIFACTS_DIR}/")
 
