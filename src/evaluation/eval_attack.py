@@ -3,14 +3,14 @@
 import argparse
 import time
 import torch
-from attacks.registry import get_attack_fn
-from utils.config import EPSILONS
-from utils.data import get_mnist_test_loader
-from utils.evaluation import evaluate
-from utils.logger import JSONLLogger
-from utils.modeling import load_model
-from utils.reproducibility import set_seed
-from utils.run_id import make_run_id
+from src.models.cnn import CNN
+from src.attacks.registry import get_attack_fn
+from src.utils.config import EPSILONS
+from src.utils.data import get_mnist_test_loader
+from src.evaluation.core import evaluate
+from src.logging.logger import JSONLLogger
+from src.utils.reproducibility import set_seed
+from src.logging.run_id import make_run_id
 
 batch_size = 64
 
@@ -37,7 +37,14 @@ def main():
     )
 
     device     = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model      = load_model(base_model_path, device)
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model = CNN().to(device)
+    model.load_state_dict(torch.load(base_model_path, map_location=device))
+    model.eval()
+
+
     attack_fn, attack_params = get_attack_fn(args.attack, steps=args.steps)
     test_loader = get_mnist_test_loader(batch_size)
 

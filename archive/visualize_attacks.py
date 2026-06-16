@@ -5,11 +5,11 @@ import torch
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from model import CNN
-from attacks.registry import ATTACKS, MODELS
-from utils.data import get_mnist_test_loader
-from utils.reproducibility import set_seed
-from utils.config import EPSILONS
+from src.models.cnn import CNN
+from src.attacks.registry import ATTACKS, MODELS
+from src.utils.data import get_mnist_test_loader
+from src.utils.reproducibility import set_seed
+from src.utils.config import EPSILONS
 
 def get_examples(model, device, test_loader, attack_fn, epsilons, n=5):
     examples = {eps: [] for eps in epsilons}
