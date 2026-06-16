@@ -39,7 +39,9 @@ adversarial-ml/
 │   ├── jsonl/                  # raw experiment logs
 │   ├── images/                 # plots
 │   └── csv/                    # summary tables
-├── models/                     # necessary, do not remove
+├── tools/                      #
+│   ├── visualize_attacks.py    # produces visualization of attack effects
+├── models/                     # model storage location
 └── docs/
     ├── mnist_cnn_baseline.md
     ├── mnist_cnn_attacks.md
