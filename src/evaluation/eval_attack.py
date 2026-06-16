@@ -3,10 +3,10 @@
 import argparse
 import time
 import torch
-from src.models.cnn import CNN
+from src.models.factory import load_model
 from src.attacks.registry import get_attack_fn
 from src.utils.config import EPSILONS
-from src.utils.data import get_mnist_test_loader
+from src.data.loader import get_mnist_test_loader
 from src.evaluation.core import evaluate
 from src.logging.logger import JSONLLogger
 from src.utils.reproducibility import set_seed
@@ -37,12 +37,7 @@ def main():
     )
 
     device     = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    model = CNN().to(device)
-    model.load_state_dict(torch.load(base_model_path, map_location=device))
-    model.eval()
+    model = load_model(base_model_path, device)
 
 
     attack_fn, attack_params = get_attack_fn(args.attack, steps=args.steps)

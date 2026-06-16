@@ -5,8 +5,9 @@ import time
 import torch
 from src.models.cnn import CNN
 from src.attacks.registry import get_attack_fn
-from src.utils.data import get_mnist_test_loader
+from src.data.loader import get_mnist_test_loader
 from src.utils.config import EPSILONS
+from src.models.factory import load_model
 from src.utils.reproducibility import set_seed
 from src.evaluation.core import evaluate
 from src.logging.logger import JSONLLogger
@@ -54,17 +55,13 @@ def main():
 
     # baseline model
     base_model_path = f"models/cnn_mnist_seed{args.seed}.pth"
-    base_model = CNN().to(device)
-    base_model.load_state_dict(torch.load(base_model_path, map_location=device))
-    base_model.eval()
+    base_model = load_model(base_model_path, device)
 
     # defense model
     defense_path = _defense_model_path(
         args.defense_attack, args.defense_steps, args.defense_epsilon, args.seed
     )
-    defense_model = CNN().to(device)
-    defense_model.load_state_dict(torch.load(defense_path, map_location=device))
-    defense_model.eval()
+    defense_model = load_model(defense_path, device)
 
     # eval attack
     eval_attack_fn, eval_attack_params = get_attack_fn(args.eval_attack, steps=args.eval_steps)

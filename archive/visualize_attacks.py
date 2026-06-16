@@ -7,7 +7,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from src.models.cnn import CNN
 from src.attacks.registry import ATTACKS, MODELS
-from src.utils.data import get_mnist_test_loader
+from src.data.loader import get_mnist_test_loader
 from src.utils.reproducibility import set_seed
 from src.utils.config import EPSILONS
 

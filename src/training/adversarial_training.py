@@ -5,9 +5,9 @@ import time
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from src.models.cnn import CNN
+from src.models.factory import load_model
 from src.attacks.registry import get_attack_fn
-from src.utils.data import get_mnist_train_loader, get_mnist_test_loader
+from src.data.loader import get_mnist_train_loader, get_mnist_test_loader
 from src.logging.logger import JSONLLogger
 from src.utils.reproducibility import set_seed
 from src.evaluation.core import evaluate
@@ -91,9 +91,7 @@ def main():
     train_loader = get_mnist_train_loader(batch_size, seed=args.seed)
     test_loader  = get_mnist_test_loader(batch_size)
 
-    defense_model = CNN().to(device)
-    defense_model.load_state_dict(torch.load(base_model_path, map_location=device))
-
+    defense_model = load_model(base_model_path, device)
     optimizer = optim.Adam(defense_model.parameters(), lr=learning_rate)
     criterion = nn.CrossEntropyLoss()
 
