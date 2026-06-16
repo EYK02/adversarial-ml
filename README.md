@@ -46,33 +46,33 @@ adversarial-ml/
 ```
 ## Setup
 
-\```bash
+```bash
 git clone https://github.com/EYK02/adversarial-ml.git
 cd adversarial-ml
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
-\```
+```
 
 ## Reproducing results
 
 Run the full pipeline:
-\```bash
+```bash
 python run_all.py
-\```
+```
 
 Or run individual stages:
-\```bash
+```bash
 python -m runs.run_training
 python -m runs.run_attack_eval
 python -m runs.run_adversarial_training
 python -m runs.run_defense_eval
-\```
+```
 
 Generate analysis report:
-\```bash
+```bash
 python -m analysis.report
-\```
+```
 
 ## Stack
 
