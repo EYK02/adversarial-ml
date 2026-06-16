@@ -1,15 +1,23 @@
 # utils/run_id.py
 
-def make_run_id(task, model, attack=None, epsilon=None, seed=None):
+def make_run_id(task: str, model: str, **metadata) -> str:
     parts = [task, model]
 
-    if attack is not None:
-        parts.append(attack)
+    for key, value in metadata.items():
+        if value is None:
+            continue
 
-    if epsilon is not None:
-        parts.append(f"eps{epsilon}")
+        if key == "epsilon":
+            parts.append(f"eps{value}")
 
-    if seed is not None:
-        parts.append(f"seed{seed}")
+        elif key == "seed":
+            parts.append(f"seed{value}")
+
+        elif isinstance(value, bool):
+            if value:
+                parts.append(key)
+
+        else:
+            parts.append(f"{key}{value}")
 
     return "_".join(map(str, parts))
