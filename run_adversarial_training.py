@@ -43,3 +43,5 @@ for seed in SEEDS:
 
 for exp in experiments:
     runner.run(exp)
+
+runner.summary()
