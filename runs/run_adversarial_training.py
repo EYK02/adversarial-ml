@@ -1,7 +1,7 @@
 # run_adversarial_training.py
 
 import sys
-from utils.runner import Experiment, ExperimentRunner
+from src.utils.runner import Experiment, ExperimentRunner
 
 TRAINING_EPSILON = 0.2
 SEEDS = list(range(5))

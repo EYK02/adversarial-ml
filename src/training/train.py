@@ -5,11 +5,11 @@ import argparse
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from model import CNN
-from utils.data import get_mnist_train_loader, get_mnist_test_loader
-from utils.reproducibility import set_seed
-from utils.evaluation import evaluate
-from utils.logger import JSONLLogger
+from src.models.cnn import CNN
+from src.utils.data import get_mnist_train_loader, get_mnist_test_loader
+from src.utils.reproducibility import set_seed
+from src.evaluation.core import evaluate
+from src.logging.logger import JSONLLogger
 
 batch_size = 64
 learning_rate = 0.001

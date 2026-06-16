@@ -3,14 +3,14 @@
 import argparse
 import time
 import torch
-from model import CNN
-from attacks.registry import get_attack_fn
-from utils.data import get_mnist_test_loader
-from utils.config import EPSILONS
-from utils.reproducibility import set_seed
-from utils.evaluation import evaluate
-from utils.logger import JSONLLogger
-from utils.run_id import make_run_id
+from src.models.cnn import CNN
+from src.attacks.registry import get_attack_fn
+from src.utils.data import get_mnist_test_loader
+from src.utils.config import EPSILONS
+from src.utils.reproducibility import set_seed
+from src.evaluation.core import evaluate
+from src.logging.logger import JSONLLogger
+from src.logging.run_id import make_run_id
 
 batch_size = 64
 
