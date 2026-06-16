@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from src.models.cnn import CNN
-from src.utils.data import get_mnist_train_loader, get_mnist_test_loader
+from src.data.loader import get_mnist_train_loader, get_mnist_test_loader
 from src.utils.reproducibility import set_seed
 from src.evaluation.core import evaluate
 from src.logging.logger import JSONLLogger
