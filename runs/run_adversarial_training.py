@@ -4,7 +4,7 @@ import sys
 from src.utils.runner import Experiment, ExperimentRunner
 
 TRAINING_EPSILON = 0.2
-SEEDS = list(range(5))
+SEEDS = [1, 2, 3, 4] #list(range(5))
 
 PGD_STEPS = [5, 10, 20, 40]
 
@@ -18,7 +18,7 @@ for seed in SEEDS:
         Experiment(
             f"FGSM defense seed={seed}",
             [
-                sys.executable, "-m", "defenses.adversarial_training",
+                sys.executable, "-m", "src.training.adversarial_training",
                 "--attack",  "fgsm",
                 "--epsilon", str(TRAINING_EPSILON),
                 "--seed",    str(seed),
@@ -32,7 +32,7 @@ for seed in SEEDS:
             Experiment(
                 f"PGD-{steps} defense seed={seed}",
                 [
-                    sys.executable, "-m", "defenses.adversarial_training",
+                    sys.executable, "-m", "src.training.adversarial_training",
                     "--attack",  "pgd",
                     "--steps",   str(steps),
                     "--epsilon", str(TRAINING_EPSILON),
