@@ -31,8 +31,6 @@ def evaluate(model, device, loader, attack_fn=None, epsilon=None, criterion=None
 
     acc = 100.0 * correct / total
 
-    # TODO: log attack time in evaluate instead of evaluate_attack
-
     if use_loss:
         return total_loss / len(loader), acc
     return acc
