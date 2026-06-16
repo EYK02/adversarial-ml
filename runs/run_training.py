@@ -22,3 +22,5 @@ for seed in range(5):
 
 for exp in experiments:
     runner.run(exp)
+
+runner.summary()
