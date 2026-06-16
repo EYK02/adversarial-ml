@@ -14,7 +14,7 @@ from src.logging.run_id import make_run_id
 
 batch_size = 64
 
-logger = JSONLLogger("results/jsonl/attack_eval.jsonl")
+logger = JSONLLogger("results/jsonl/attack_eval.jsonl") # "artifacts/jsonl/attack_eval.jsonl"
 
 
 def main():

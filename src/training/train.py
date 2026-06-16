@@ -15,8 +15,8 @@ batch_size = 64
 learning_rate = 0.001
 num_epochs = 5
 
-training_logger = JSONLLogger("results/jsonl/training.jsonl")
-model_logger = JSONLLogger("results/jsonl/model_save.jsonl")
+training_logger = JSONLLogger("results/jsonl/training.jsonl")   # change "results" to "artifacts"
+model_logger = JSONLLogger("results/jsonl/model_save.jsonl")    # same
 
 
 def train(model, device, loader, optimizer, criterion):

@@ -15,7 +15,7 @@ from src.logging.run_id import make_run_id
 
 batch_size = 64
 
-logger = JSONLLogger("results/jsonl/defense_eval.jsonl")
+logger = JSONLLogger("results/jsonl/defense_eval.jsonl") # "artifacts/jsonl/defense_eval.jsonl"
 
 
 def _defense_model_path(attack: str, steps: int | None, epsilon: float, seed: int) -> str:
