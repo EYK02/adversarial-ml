@@ -13,33 +13,34 @@ runner = ExperimentRunner()
 experiments = []
 
 for seed in SEEDS:
-    # FGSM defense
-    experiments.append(
-        Experiment(
-            f"FGSM defense seed={seed}",
-            [
-                sys.executable, "-m", "src.training.adversarial_training",
-                "--attack",  "fgsm",
-                "--epsilon", str(TRAINING_EPSILON),
-                "--seed",    str(seed),
-            ]
-        )
-    )
+    # # FGSM defense
+    # experiments.append(
+    #     Experiment(
+    #         f"FGSM defense seed={seed}",
+    #         [
+    #             sys.executable, "-m", "src.training.adversarial_training",
+    #             "--attack",  "fgsm",
+    #             "--epsilon", str(TRAINING_EPSILON),
+    #             "--seed",    str(seed),
+    #         ]
+    #     )
+    # )
 
     # PGD defenses
     for steps in PGD_STEPS:
-        experiments.append(
-            Experiment(
-                f"PGD-{steps} defense seed={seed}",
-                [
-                    sys.executable, "-m", "src.training.adversarial_training",
-                    "--attack",  "pgd",
-                    "--steps",   str(steps),
-                    "--epsilon", str(TRAINING_EPSILON),
-                    "--seed",    str(seed),
-                ]
+        for seed in SEEDS:      
+            experiments.append(
+                Experiment(
+                    f"PGD-{steps} defense seed={seed}",
+                    [
+                        sys.executable, "-m", "src.training.adversarial_training",
+                        "--attack",  "pgd",
+                        "--steps",   str(steps),
+                        "--epsilon", str(TRAINING_EPSILON),
+                        "--seed",    str(seed),
+                    ]                                           
+                )
             )
-        )
 
 for exp in experiments:
     runner.run(exp)
