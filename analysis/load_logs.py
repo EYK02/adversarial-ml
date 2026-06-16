@@ -1,47 +1,70 @@
 # analysis/load_logs.py
 
 import json
-import pandas as pd
-from analysis.normalize import normalize
-import ast
+from pathlib import Path
 
-def _parse_attack_params(val):
+import pandas as pd
+
+from analysis.normalize import normalize
+
+ARTIFACTS_DIR = Path("results")
+JSONL_DIR     = ARTIFACTS_DIR / "jsonl"
+
+PARAM_COLS = ["attack_params", "defense_params", "eval_params"]
+
+
+def _parse_params(val):
     if isinstance(val, dict):
         return val
     if isinstance(val, str):
-        return json.loads(val)
+        try:
+            return json.loads(val)
+        except (json.JSONDecodeError, ValueError):
+            return {}
     return {}
 
-def load_jsonl(path: str) -> pd.DataFrame:
+
+def load_jsonl(path: Path) -> pd.DataFrame:
     rows = []
-    with open(path, "r") as f:
-        for line in f:
-            rows.append(json.loads(line))
+    try:
+        with open(path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    rows.append(json.loads(line))
+    except FileNotFoundError:
+        return pd.DataFrame()
+
+    if not rows:
+        return pd.DataFrame()
+
     df = pd.DataFrame(rows)
-    if "attack_params" in df.columns:
-        df["attack_params"] = df["attack_params"].apply(_parse_attack_params)
+
+    for col in PARAM_COLS:
+        if col in df.columns:
+            df[col] = df[col].apply(_parse_params)
+
     return df
 
 
-def load_all():
+def load_all() -> dict[str, pd.DataFrame]:
     """
     Loads all experiment logs and returns:
     - raw views (for debugging)
     - normalized views (for analysis)
     """
-
     dfs = {}
 
-    # ---------------- raw logs ----------------
-    dfs["train_raw"]        = load_jsonl("results/jsonl/training.jsonl")
-    dfs["attack_raw"]       = load_jsonl("results/jsonl/attack_eval.jsonl")
-    dfs["adv_train_raw"]    = load_jsonl("results/jsonl/adv_training.jsonl")
-    dfs["defense_raw"]      = load_jsonl("results/jsonl/defense_eval.jsonl")
+    sources = {
+        "train":     JSONL_DIR / "training.jsonl",
+        "attack":    JSONL_DIR / "attack_eval.jsonl",
+        "adv_train": JSONL_DIR / "adv_training.jsonl",
+        "defense":   JSONL_DIR / "defense_eval.jsonl",
+    }
 
-    # ---------------- normalized logs ----------------
-    dfs["train"]            = normalize(dfs["train_raw"])
-    dfs["attack"]           = normalize(dfs["attack_raw"])
-    dfs["adv_train"]        = normalize(dfs["adv_train_raw"])
-    dfs["defense"]          = normalize(dfs["defense_raw"])
+    for key, path in sources.items():
+        raw = load_jsonl(path)
+        dfs[f"{key}_raw"] = raw
+        dfs[key] = normalize(raw) if not raw.empty else pd.DataFrame()
 
     return dfs
