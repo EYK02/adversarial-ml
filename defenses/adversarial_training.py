@@ -84,8 +84,8 @@ def main():
         attack_tag = args.attack
 
     base_model_path = f"models/cnn_mnist_seed{args.seed}.pth"
-    save_path       = f"models/adv_{attack_tag}_eps{args.epsilon}_seed{args.seed}.pth"
-
+    save_path = f"models/cnn_mnist_adv_{attack_tag}_eps{args.epsilon}_seed{args.seed}.pth"
+    
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     train_loader = get_mnist_train_loader(batch_size, seed=args.seed)

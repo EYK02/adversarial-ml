@@ -22,7 +22,7 @@ def _defense_model_path(attack: str, steps: int | None, epsilon: float, seed: in
         attack_tag = f"pgd{steps}"
     else:
         attack_tag = attack
-    return f"models/adv_{attack_tag}_eps{epsilon}_seed{seed}.pth"
+    return f"models/cnn_mnist_adv_{attack_tag}_eps{epsilon}_seed{seed}.pth"
 
 
 def main():
