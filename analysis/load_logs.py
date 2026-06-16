@@ -3,14 +3,24 @@
 import json
 import pandas as pd
 from analysis.normalize import normalize
+import ast
 
+def _parse_attack_params(val):
+    if isinstance(val, dict):
+        return val
+    if isinstance(val, str):
+        return json.loads(val)
+    return {}
 
 def load_jsonl(path: str) -> pd.DataFrame:
     rows = []
     with open(path, "r") as f:
         for line in f:
             rows.append(json.loads(line))
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    if "attack_params" in df.columns:
+        df["attack_params"] = df["attack_params"].apply(_parse_attack_params)
+    return df
 
 
 def load_all():
@@ -23,15 +33,15 @@ def load_all():
     dfs = {}
 
     # ---------------- raw logs ----------------
-    dfs["train_raw"] = load_jsonl("results/jsonl/training.jsonl")
-    dfs["attack_raw"] = load_jsonl("results/jsonl/attack_eval.jsonl")
-    dfs["adv_train_raw"] = load_jsonl("results/jsonl/adv_training.jsonl")
-    dfs["defense_raw"] = load_jsonl("results/jsonl/defense_eval.jsonl")
+    dfs["train_raw"]        = load_jsonl("results/jsonl/training.jsonl")
+    dfs["attack_raw"]       = load_jsonl("results/jsonl/attack_eval.jsonl")
+    #dfs["adv_train_raw"]    = load_jsonl("results/jsonl/adv_training.jsonl")
+    #dfs["defense_raw"]      = load_jsonl("results/jsonl/defense_eval.jsonl")
 
     # ---------------- normalized logs ----------------
-    dfs["train"] = normalize(dfs["train_raw"])
-    dfs["attack"] = normalize(dfs["attack_raw"])
-    dfs["adv_train"] = normalize(dfs["adv_train_raw"])
-    dfs["defense"] = normalize(dfs["defense_raw"])
+    dfs["train"]            = normalize(dfs["train_raw"])
+    dfs["attack"]           = normalize(dfs["attack_raw"])
+    #dfs["adv_train"]        = normalize(dfs["adv_train_raw"])
+    #dfs["defense"]          = normalize(dfs["defense_raw"])
 
     return dfs

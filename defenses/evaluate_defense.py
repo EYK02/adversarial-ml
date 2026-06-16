@@ -3,7 +3,6 @@
 import argparse
 import torch
 from model import CNN
-from attacks.registry import ATTACKS, MODELS
 from utils.data import get_mnist_test_loader
 from utils.config import EPSILONS
 from utils.reproducibility import set_seed
@@ -17,9 +16,9 @@ logger = JSONLLogger("results/jsonl/defense_eval.jsonl")
 
 def main():
     parser = argparse.ArgumentParser(description='Evaluate adversarial defense on MNIST')
-    parser.add_argument('--attack', type=str, default='fgsm', choices=ATTACKS.keys(),
+    parser.add_argument('--attack', type=str, default='fgsm',
                         help='Attack to evaluate against')
-    parser.add_argument('--defense', type=str, default='fgsm', choices=MODELS.keys(),
+    parser.add_argument('--defense', type=str, default='fgsm',
                         help='Defended model to evaluate')
     parser.add_argument('--seed', type=int, default=0, help='Random seed for reproducibility')
     args = parser.parse_args()

@@ -1,154 +1,98 @@
 # analysis/schema.py
 
-from dataclasses import dataclass
-from typing import Dict, Any, Optional, Literal
-import time
+from dataclasses import dataclass, asdict
+from typing import Any, Optional, Literal
+
+RunType = Literal["training", "attack_eval", "adv_training", "defense_eval"]
 
 
-RunType = Literal[
-    "training",
-    "attack_eval",
-    "adv_training",
-    "defense_eval",
-    "model_save"
-]
+# ─────────────────────────────────────────
+# DATACLASSES  (authoritative schema docs)
+# ─────────────────────────────────────────
 
-
-# -------------------------
-# BASE NORMALIZED RECORD
-# -------------------------
 @dataclass
-class BaseRecord:
-    run_type: RunType
-    model: str
-    dataset: str
-    seed: int
-    timestamp: float
-
-
-# -------------------------
-# ATTACK EVAL RECORD
-# -------------------------
-@dataclass
-class AttackEvalRecord(BaseRecord):
-    attack: str
-    epsilon: float
-    accuracy: float
-    duration_sec: float
-
-    # flattened attack params (IMPORTANT)
-    steps: Optional[int] = None
-    alpha: Optional[float] = None
-
-
-# -------------------------
-# TRAINING RECORD
-# -------------------------
-@dataclass
-class TrainingRecord(BaseRecord):
-    epoch: int
-    train_loss: float
+class TrainingRecord:
+    run_type:       RunType
+    dataset:        str
+    model:          str
+    seed:           int
+    epoch:          int
+    train_loss:     float
     train_accuracy: float
-    test_loss: float
-    test_accuracy: float
+    test_loss:      float
+    test_accuracy:  float
+    timestamp:      str
 
 
-# -------------------------
-# ADV TRAINING RECORD
-# -------------------------
 @dataclass
-class AdvTrainingRecord(BaseRecord):
-    attack: str
-    epsilon: float
-    epoch: int
-
-    train_loss: float
-    train_clean_accuracy: float
-    train_adv_accuracy: float
-    test_clean_accuracy: float
-
-    steps: Optional[int] = None
-
-
-# -------------------------
-# MODEL SAVE RECORD
-# -------------------------
-@dataclass
-class ModelSaveRecord(BaseRecord):
-    model_path: str
+class AttackEvalRecord:
+    run_type:     RunType
+    model:        str
+    model_path:   str
+    dataset:      str
+    attack:       str
+    epsilon:      float
+    accuracy:     float
     duration_sec: float
+    seed:         int
+    timestamp:    str
+    steps:        Optional[int]  = None
+    alpha:        Optional[float] = None
 
-    attack: Optional[str] = None
-    epsilon: Optional[float] = None
+
+# ─────────────────────────────────────────
+# NORMALIZERS
+# ─────────────────────────────────────────
+
+def _normalize_training(row: dict[str, Any]) -> dict[str, Any]:
+    return asdict(TrainingRecord(
+        run_type       = row["run_type"],
+        dataset        = row["dataset"],
+        model          = row["model"],
+        seed           = int(row["seed"]),
+        epoch          = int(row["epoch"]),
+        train_loss     = float(row["train_loss"]),
+        train_accuracy = float(row["train_accuracy"]),
+        test_loss      = float(row["test_loss"]),
+        test_accuracy  = float(row["test_accuracy"]),
+        timestamp      = row["timestamp"],
+    ))
 
 
-# -------------------------
-# NORMALIZATION LOGIC
-# -------------------------
-def normalize(row: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Converts raw JSONL row into strict flat schema-compatible dict.
-    """
+def _normalize_attack_eval(row: dict[str, Any]) -> dict[str, Any]:
+    raw_params = row.get("attack_params")
+    params = raw_params if isinstance(raw_params, dict) else {}
 
-    base = {
-        "run_type": row["run_type"],
-        "model": row.get("model", "unknown"),
-        "dataset": row.get("dataset", "mnist"),
-        "seed": row.get("seed", -1),
-        "timestamp": row.get("timestamp", time.time()),
-    }
+    return asdict(AttackEvalRecord(
+        run_type     = row["run_type"],
+        model        = row["model"],
+        model_path   = row.get("model_path", ""),
+        dataset      = row["dataset"],
+        attack       = row["attack"],
+        epsilon      = float(row["epsilon"]),
+        accuracy     = float(row["value"]),       # "metric"/"value" -> "accuracy"
+        duration_sec = float(row["duration_sec"]),
+        seed         = int(row["seed"]),
+        timestamp    = row["timestamp"],
+        steps        = int(params["steps"]) if "steps" in params else None,
+        alpha        = float(params["alpha"]) if "alpha" in params else None,
+    ))
 
-    # ---------------- attack eval ----------------
-    if row["run_type"] == "attack_eval":
-        params = row.get("attack_params", {}) or {}
 
-        return {
-            **base,
-            "attack": row["attack"],
-            "epsilon": row["epsilon"],
-            "accuracy": row.get("value"),
-            "duration_sec": row.get("duration_sec"),
+# ─────────────────────────────────────────
+# PUBLIC ENTRY POINT
+# ─────────────────────────────────────────
 
-            # flatten params
-            "steps": params.get("steps"),
-            "alpha": params.get("alpha"),
-        }
+_NORMALIZERS = {
+    "training":    _normalize_training,
+    "attack_eval": _normalize_attack_eval,
+}
 
-    # ---------------- training ----------------
-    if row["run_type"] == "training":
-        return {
-            **base,
-            "epoch": row["epoch"],
-            "train_loss": row["train_loss"],
-            "train_accuracy": row["train_accuracy"],
-            "test_loss": row["test_loss"],
-            "test_accuracy": row["test_accuracy"],
-        }
+def normalize_row(row: dict[str, Any]) -> dict[str, Any]:
+    run_type = row.get("run_type")
+    fn = _NORMALIZERS.get(run_type)
 
-    # ---------------- adversarial training ----------------
-    if row["run_type"] == "adv_training":
-        return {
-            **base,
-            "attack": row["attack"],
-            "epsilon": row["epsilon"],
-            "epoch": row["epoch"],
+    if fn is None:
+        raise ValueError(f"No normalizer for run_type: {run_type!r}")
 
-            "train_loss": row["train_loss"],
-            "train_clean_accuracy": row["train_clean_accuracy"],
-            "train_adv_accuracy": row["train_adv_accuracy"],
-            "test_clean_accuracy": row["test_clean_accuracy"],
-
-            "steps": (row.get("attack_params") or {}).get("steps"),
-        }
-
-    # ---------------- model save ----------------
-    if row["run_type"] == "model_save":
-        return {
-            **base,
-            "model_path": row["model_path"],
-            "duration_sec": row.get("duration"),
-            "attack": row.get("attack"),
-            "epsilon": row.get("epsilon"),
-        }
-
-    raise ValueError(f"Unknown run_type: {row['run_type']}")
+    return fn(row)
