@@ -2,7 +2,7 @@
 
 def make_run_id(task: str, model: str, **metadata) -> str:
     parts = [task, model]
-
+    
     for key, value in metadata.items():
         if value is None:
             continue
