@@ -1,7 +1,7 @@
 # MNIST - CNN Baseline
 
 ## Setup
-- **Model:** Convoluted Neural Network (CNN)
+- **Model:** Convolutional Neural Network (CNN)
 - **Dataset:** MNIST
 - **Seeds:** 0-4
 - **Optimizer:** Adam (learning rate = 0.001)
