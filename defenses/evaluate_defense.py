@@ -40,8 +40,11 @@ def main():
     run_id = make_run_id(
         task="defense_eval",
         model="cnn_mnist",
-        attack=args.eval_attack,
-        epsilon=args.defense_epsilon,
+        defense=args.defense_attack,
+        defense_steps=args.defense_steps,
+        eval_attack=args.eval_attack,
+        eval_steps=args.eval_steps,
+        defense_epsilon=args.defense_epsilon,
         seed=args.seed,
     )
 
