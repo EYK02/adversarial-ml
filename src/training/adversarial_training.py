@@ -17,8 +17,8 @@ batch_size    = 64
 epochs        = 5
 learning_rate = 0.001
 
-training_logger = JSONLLogger("results/jsonl/adv_training.jsonl")
-model_logger    = JSONLLogger("results/jsonl/model_save.jsonl")
+training_logger = JSONLLogger("results/jsonl/adv_training.jsonl")   # change "results" to "artifacts"
+model_logger    = JSONLLogger("results/jsonl/model_save.jsonl")     # same
 
 
 def train_adversarial(model, device, train_loader, optimizer, criterion, attack_fn, epsilon):
