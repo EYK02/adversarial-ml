@@ -35,13 +35,13 @@ def load_all():
     # ---------------- raw logs ----------------
     dfs["train_raw"]        = load_jsonl("results/jsonl/training.jsonl")
     dfs["attack_raw"]       = load_jsonl("results/jsonl/attack_eval.jsonl")
-    #dfs["adv_train_raw"]    = load_jsonl("results/jsonl/adv_training.jsonl")
-    #dfs["defense_raw"]      = load_jsonl("results/jsonl/defense_eval.jsonl")
+    dfs["adv_train_raw"]    = load_jsonl("results/jsonl/adv_training.jsonl")
+    dfs["defense_raw"]      = load_jsonl("results/jsonl/defense_eval.jsonl")
 
     # ---------------- normalized logs ----------------
     dfs["train"]            = normalize(dfs["train_raw"])
     dfs["attack"]           = normalize(dfs["attack_raw"])
-    #dfs["adv_train"]        = normalize(dfs["adv_train_raw"])
-    #dfs["defense"]          = normalize(dfs["defense_raw"])
+    dfs["adv_train"]        = normalize(dfs["adv_train_raw"])
+    dfs["defense"]          = normalize(dfs["defense_raw"])
 
     return dfs
