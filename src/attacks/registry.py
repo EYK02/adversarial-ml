@@ -14,5 +14,7 @@ def get_attack_fn(name, **kwargs):
         return partial(pgd_attack, steps=steps), {
             "steps": steps
         }
+    
+    # Add future attacks here
 
     raise ValueError(f"Unknown attack: {name}")
