@@ -14,7 +14,7 @@ pipeline.
 ## Repo structure
 ```
 adversarial-ml/
-├── run_all.py                  # full pipeline: train → attack → defend → analyze
+├── run_all.py                  # reproducible full pipeline across all seeds
 ├── runs/                       # individual stage sweep scripts
 │   ├── run_training.py
 │   ├── run_attack_eval.py
@@ -39,10 +39,11 @@ adversarial-ml/
 │   ├── jsonl/                  # raw experiment logs
 │   ├── images/                 # plots
 │   └── csv/                    # summary tables
+├── models/                     #
 └── docs/
-    ├── mnist_baseline.md
-    ├── mnist_adversarial.md
-    └── mnist_defense.md
+    ├── mnist_cnn_baseline.md
+    ├── mnist_cnn_attacks.md
+    └── mnist_cnn_defenses.md
 ```
 ## Setup
 
@@ -56,7 +57,7 @@ pip install -r requirements.txt
 
 ## Reproducing results
 
-Run the full pipeline:
+Run the full pipeline, train → attack → defend → analyze:
 ```bash
 python run_all.py
 ```
@@ -91,3 +92,4 @@ See docs/ for detailed findings per experiment.
 - Would results hold on CIFAR-10?
 - Is the marginal improvement from more PGD steps worth the training cost?
 - Why does adversarial training slightly improve clean accuracy — regularisation effect?
+- Would an attack concentrated on digit pizels rather than background be more effective?
