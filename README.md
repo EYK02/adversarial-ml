@@ -12,7 +12,7 @@ CLI-driven with a clean src/ layout and a structured logging and analysis
 pipeline.
 
 ## Repo structure
-
+```
 adversarial-ml/
 ├── run_all.py                  # full pipeline: train → attack → defend → analyze
 ├── runs/                       # individual stage sweep scripts
@@ -43,7 +43,7 @@ adversarial-ml/
     ├── mnist_baseline.md
     ├── mnist_adversarial.md
     └── mnist_defense.md
-
+```
 ## Setup
 
 \```bash
