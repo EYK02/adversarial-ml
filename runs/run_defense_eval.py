@@ -1,73 +1,56 @@
 # run_defense_eval.py
 
 import sys
-
 from src.utils.runner import Experiment, ExperimentRunner
 
-runner = ExperimentRunner()
+DEFENSE_EPSILON = 0.2
+SEEDS = list(range(5))
 
+DEFENSES = [
+    ("fgsm", None),
+    ("pgd",  5),
+    ("pgd",  10),
+    ("pgd",  20),
+    ("pgd",  40),
+]
+
+EVAL_ATTACKS = [
+    ("fgsm", None),
+    ("pgd",  40),
+]
+
+runner = ExperimentRunner()
 experiments = []
 
-seeds = range(1)
-
-defenses = [
-    ("fgsm", None),
-    ("pgd", 10),
-    ("pgd", 20),
-    ("pgd", 5),
-    ("pgd", 40),
-]
-
-eval_attacks = [
-    ("pgd", 40),
-]
-
-for seed in seeds:
-    for defense_attack, defense_steps in defenses:
-        for eval_attack, eval_steps in eval_attacks:
+for defense_attack, defense_steps in DEFENSES:
+    for seed in SEEDS:
+        for eval_attack, eval_steps in EVAL_ATTACKS:
 
             cmd = [
-                sys.executable,
-                "-m",
-                "defenses.evaluate_defense",
-
-                "--defense_attack",
-                defense_attack,
-
-                "--defense_epsilon",
-                "0.2",
-
-                "--eval_attack",
-                eval_attack,
-
-                "--seed",
-                str(seed),
+                sys.executable, "-m", "src.evaluation.eval_robustness",
+                "--defense_attack",  defense_attack,
+                "--defense_epsilon", str(DEFENSE_EPSILON),
+                "--eval_attack",     eval_attack,
+                "--seed",            str(seed),
             ]
 
             if defense_steps is not None:
-                cmd.extend([
-                    "--defense_steps",
-                    str(defense_steps),
-                ])
+                cmd.extend(["--defense_steps", str(defense_steps)])
 
             if eval_steps is not None:
-                cmd.extend([
-                    "--eval_steps",
-                    str(eval_steps),
-                ])
+                cmd.extend(["--eval_steps", str(eval_steps)])
+
+            defense_tag = f"{defense_attack}{defense_steps or ''}"
+            eval_tag    = f"{eval_attack}{eval_steps or ''}"
 
             experiments.append(
                 Experiment(
-                    (
-                        f"def={defense_attack}"
-                        f"{defense_steps or ''} "
-                        f"atk={eval_attack}"
-                        f"{eval_steps or ''} "
-                        f"seed={seed}"
-                    ),
+                    f"def={defense_tag} atk={eval_tag} seed={seed}",
                     cmd,
                 )
             )
 
 for exp in experiments:
     runner.run(exp)
+
+runner.summary()
