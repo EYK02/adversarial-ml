@@ -54,7 +54,7 @@ def main():
 
     model = CNN().to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)    # Optimizer: Adam
 
     for epoch in range(num_epochs):
         train_loss, train_acc = train(model, device, train_loader, optimizer, criterion)

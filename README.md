@@ -39,7 +39,7 @@ adversarial-ml/
 │   ├── jsonl/                  # raw experiment logs
 │   ├── images/                 # plots
 │   └── csv/                    # summary tables
-├── models/                     #
+├── models/                     # necessary, do not remove
 └── docs/
     ├── mnist_cnn_baseline.md
     ├── mnist_cnn_attacks.md
