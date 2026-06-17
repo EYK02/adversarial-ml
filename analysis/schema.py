@@ -8,9 +8,7 @@ from typing import Any, Optional, Literal
 RunType = Literal["training", "attack_eval", "adv_training", "defense_eval"]
 
 
-# ─────────────────────────────────────────
-# DATACLASSES  (authoritative schema docs)
-# ─────────────────────────────────────────
+# Dataclasses
 
 @dataclass
 class TrainingRecord:
@@ -79,9 +77,7 @@ class DefenseEvalRecord:
     eval_steps:          Optional[int] = None
 
 
-# ─────────────────────────────────────────
-# NORMALIZERS
-# ─────────────────────────────────────────
+# Normalizers
 
 def _normalize_training(row: dict[str, Any]) -> dict[str, Any]:
     return asdict(TrainingRecord(
@@ -109,7 +105,7 @@ def _normalize_attack_eval(row: dict[str, Any]) -> dict[str, Any]:
         dataset      = row["dataset"],
         attack       = row["attack"],
         epsilon      = float(row["epsilon"]),
-        accuracy     = float(row["value"]),
+        accuracy     = float(row["accuracy"]),
         duration_sec = float(row["duration_sec"]),
         seed         = int(row["seed"]),
         timestamp    = row["timestamp"],
@@ -162,10 +158,7 @@ def _normalize_defense_eval(row: dict[str, Any]) -> dict[str, Any]:
         eval_steps        = int(eval_params["steps"])    if "steps" in eval_params    else None,
     ))
 
-
-# ─────────────────────────────────────────
-# PUBLIC ENTRY POINT
-# ─────────────────────────────────────────
+# Public functions
 
 _NORMALIZERS = {
     "training":    _normalize_training,
