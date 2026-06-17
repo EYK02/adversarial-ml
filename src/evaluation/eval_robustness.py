@@ -2,7 +2,6 @@
 
 import argparse
 import time
-import torch
 from src.attacks.registry import get_attack_fn
 from src.data.loader import get_mnist_test_loader
 from src.evaluation.core import evaluate
@@ -23,11 +22,8 @@ def main():
     parser.add_argument("--eval_steps",      type=int,   default=None,  help="PGD steps for evaluation attack (PGD only)")
     parser.add_argument("--seed",            type=int,   default=0,     help="Random seed")
     args = parser.parse_args()
-
     set_seed(args.seed)
-
     device = get_device()
-
     test_loader = get_mnist_test_loader(BATCH_SIZE)
 
     # baseline model
@@ -35,18 +31,12 @@ def main():
     base_model      = load_model(base_model_path, device)
 
     # defense model
-    attack_tag      = f'pgd{args.defense_steps}' if args.defense_attack == "pgd" and args.defense_steps is not None else args.defense_attack
-    defense_path    = f"models/cnn_mnist_adv_{attack_tag}_eps{args.epsilon}_seed{args.seed}.pth"
+    defense_tag      = f'pgd{args.defense_steps}' if args.defense_attack == "pgd" and args.defense_steps is not None else args.defense_attack
+    defense_path    = f"models/cnn_mnist_adv_{defense_tag}_eps{args.defense_epsilon}_seed{args.seed}.pth"
     defense_model   = load_model(defense_path, device)
 
     # eval attack
     eval_attack_fn, eval_attack_params = get_attack_fn(args.eval_attack, steps=args.eval_steps)
-
-    # defense identity for logging
-    if args.defense_attack == "pgd" and args.defense_steps is not None:
-        defense_tag = f"pgd{args.defense_steps}"
-    else:
-        defense_tag = args.defense_attack
 
     print(f"Defense eval — defense={defense_tag}, eval_attack={args.eval_attack}, seed={args.seed}\n")
 
