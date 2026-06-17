@@ -7,7 +7,7 @@ import pandas as pd
 
 from analysis.schema import normalize
 
-ARTIFACTS_DIR = Path("results")
+ARTIFACTS_DIR = Path("artifacts")
 JSONL_DIR     = ARTIFACTS_DIR / "jsonl"
 
 PARAM_COLS = ["attack_params", "defense_params", "eval_params"]
