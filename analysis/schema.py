@@ -1,5 +1,7 @@
 # analysis/schema.py
 
+import pandas as pd
+
 from dataclasses import dataclass, asdict
 from typing import Any, Optional, Literal
 
@@ -181,3 +183,8 @@ def normalize_row(row: dict[str, Any]) -> dict[str, Any]:
         raise ValueError(f"No normalizer for run_type: {run_type!r}")
 
     return fn(row)
+
+
+def normalize(df: pd.DataFrame) -> pd.DataFrame:
+    rows = [normalize_row(row) for row in df.to_dict(orient="records")]
+    return pd.DataFrame(rows)

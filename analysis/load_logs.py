@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from analysis.normalize import normalize
+from analysis.schema import normalize
 
 ARTIFACTS_DIR = Path("results")
 JSONL_DIR     = ARTIFACTS_DIR / "jsonl"
