@@ -26,7 +26,7 @@ from analysis.plots import (
     plot_defense_vs_baseline,
 )
 
-ARTIFACTS_DIR = Path("results")  # rename to "artifacts" when ready
+ARTIFACTS_DIR = Path("artifacts")  
 IMAGES_DIR    = ARTIFACTS_DIR / "images"
 CSV_DIR       = ARTIFACTS_DIR / "csv"
 

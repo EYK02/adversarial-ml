@@ -15,8 +15,8 @@ from src.models.factory import load_model
 from src.utils.reproducibility import set_seed, get_device
 from src.utils.config import BATCH_SIZE, LEARNING_RATE, NUM_EPOCHS
 
-training_logger = JSONLLogger("results/jsonl/adv_training.jsonl")   # change "results" to "artifacts"
-model_logger    = JSONLLogger("results/jsonl/model_save.jsonl")     # same
+training_logger = JSONLLogger("artifacts/jsonl/adv_training.jsonl")   
+model_logger    = JSONLLogger("artifacts/jsonl/model_save.jsonl")     
 
 
 def train_adversarial(

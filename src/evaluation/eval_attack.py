@@ -11,7 +11,7 @@ from src.models.factory import load_model
 from src.utils.config import EPSILONS, BATCH_SIZE
 from src.utils.reproducibility import set_seed, get_device
 
-logger = JSONLLogger("results/jsonl/attack_eval.jsonl") # "artifacts/jsonl/attack_eval.jsonl"
+logger = JSONLLogger("artifacts/jsonl/attack_eval.jsonl")
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate adversarial attack on MNIST")
