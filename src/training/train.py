@@ -1,4 +1,4 @@
-# train.py
+# src/training/train.py
 
 import os
 import argparse

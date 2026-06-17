@@ -1,4 +1,4 @@
-# run_training.py
+# runs/run_training.py
 
 import sys
 from src.utils.runner import Experiment, ExperimentRunner

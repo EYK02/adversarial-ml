@@ -1,4 +1,4 @@
-# attacks/registry.py
+# src/attacks/registry.py
 
 from functools import partial
 from src.attacks.fgsm import fgsm_attack

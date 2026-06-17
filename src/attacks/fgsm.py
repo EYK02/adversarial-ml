@@ -1,4 +1,4 @@
-# attacks/fgsm.py
+# src/attacks/fgsm.py
 
 import torch
 import torch.nn as nn
