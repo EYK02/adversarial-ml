@@ -1,4 +1,4 @@
-# defenses/adversarial_training.py
+# src/training/adversarial_training.py
 
 import argparse
 import time

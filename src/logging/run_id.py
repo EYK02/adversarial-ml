@@ -1,4 +1,4 @@
-# utils/run_id.py
+# src/logging/run_id.py
 
 def make_run_id(task: str, model: str, **metadata) -> str:
     parts = [task, model]

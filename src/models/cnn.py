@@ -1,4 +1,4 @@
-# model.py
+# src/models/cnn.py
 
 import torch.nn as nn
 

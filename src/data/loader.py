@@ -1,4 +1,4 @@
-# utils/data.py
+# src/data/loader.py
 
 from random import random
 import numpy as np
