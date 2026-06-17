@@ -2,7 +2,6 @@
 
 import argparse
 import time
-import torch
 from src.attacks.registry import get_attack_fn
 from src.data.loader import get_mnist_test_loader
 from src.evaluation.core import evaluate
@@ -20,12 +19,9 @@ def main():
     parser.add_argument("--steps",  type=int,   default=None,   help="PGD step count (PGD only)")
     parser.add_argument("--seed",   type=int,   default=0,      help="Random seed")
     args = parser.parse_args()
-
     set_seed(args.seed)
-
-    test_loader = get_mnist_test_loader(BATCH_SIZE)
-
     device  = get_device()
+    test_loader = get_mnist_test_loader(BATCH_SIZE)
 
     # baseline model
     base_model_path = f"models/cnn_mnist_seed{args.seed}.pth"
