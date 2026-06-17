@@ -5,23 +5,30 @@ import time
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from src.models.factory import load_model
+
 from src.attacks.registry import get_attack_fn
 from src.data.loader import get_mnist_train_loader, get_mnist_test_loader
-from src.logging.logger import JSONLLogger
-from src.utils.reproducibility import set_seed
 from src.evaluation.core import evaluate
+from src.logging.logger import JSONLLogger
 from src.logging.run_id import make_run_id
-
-batch_size    = 64
-epochs        = 5
-learning_rate = 0.001
+from src.models.factory import load_model
+from src.utils.reproducibility import set_seed, get_device
+from src.utils.config import BATCH_SIZE, LEARNING_RATE, NUM_EPOCHS
 
 training_logger = JSONLLogger("results/jsonl/adv_training.jsonl")   # change "results" to "artifacts"
 model_logger    = JSONLLogger("results/jsonl/model_save.jsonl")     # same
 
 
-def train_adversarial(model, device, train_loader, optimizer, criterion, attack_fn, epsilon):
+def train_adversarial(
+        model, 
+        device, 
+        train_loader, 
+        optimizer, 
+        criterion, 
+        attack_fn, 
+        epsilon
+        ):
+
     model.train()
 
     total_loss    = 0
@@ -64,10 +71,13 @@ def main():
     parser.add_argument("--steps",    type=int,   default=None,   help="PGD steps (PGD only)")
     parser.add_argument("--seed",     type=int,   default=0,      help="Random seed")
     args = parser.parse_args()
+    set_seed(args.seed)
+    device = get_device()
+
+    train_loader = get_mnist_train_loader(BATCH_SIZE, seed=args.seed)
+    test_loader  = get_mnist_test_loader(BATCH_SIZE)
 
     start_time = time.perf_counter()
-
-    set_seed(args.seed)
 
     run_id = make_run_id(
         task="adv_train",
@@ -77,34 +87,25 @@ def main():
         seed=args.seed,
     )
 
-    # model naming: adv_fgsm_eps0.2_seed0.pth / adv_pgd10_eps0.2_seed0.pth
-    if args.attack == "pgd" and args.steps is not None:
-        attack_tag = f"pgd{args.steps}"
-    else:
-        attack_tag = args.attack
-
     base_model_path = f"models/cnn_mnist_seed{args.seed}.pth"
-    save_path = f"models/cnn_mnist_adv_{attack_tag}_eps{args.epsilon}_seed{args.seed}.pth"
+    base_model      = load_model(base_model_path, device)
     
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    defense_tag     = f'pgd{args.defense_steps}' if args.defense_attack == "pgd" and args.defense_steps is not None else args.defense_attack
+    defense_path    = f"models/cnn_mnist_adv_{defense_tag}_eps{args.epsilon}_seed{args.seed}.pth"
 
-    train_loader = get_mnist_train_loader(batch_size, seed=args.seed)
-    test_loader  = get_mnist_test_loader(batch_size)
-
-    defense_model = load_model(base_model_path, device)
-    optimizer = optim.Adam(defense_model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(base_model.parameters(), lr=LEARNING_RATE)
     criterion = nn.CrossEntropyLoss()
 
-    # fix: use args.steps, not args.steps on undefined parser arg
+    # Get attack
     attack_fn, attack_params = get_attack_fn(args.attack, steps=args.steps)
 
-    print(f"Adversarial training — attack={attack_tag}, epsilon={args.epsilon}, seed={args.seed}\n")
+    print(f"Adversarial training — attack={defense_tag}, epsilon={args.epsilon}, seed={args.seed}\n")
 
-    for epoch in range(1, epochs + 1):
+    for epoch in range(1, NUM_EPOCHS + 1):
         train_loss, clean_acc, adv_acc = train_adversarial(
-            defense_model, device, train_loader, optimizer, criterion, attack_fn, args.epsilon
+            base_model, device, train_loader, optimizer, criterion, attack_fn, args.epsilon
         )
-        _, test_acc = evaluate(defense_model, device, test_loader, criterion=criterion)
+        test_acc = evaluate(base_model, device, test_loader)
 
         print(f"Epoch {epoch}: loss={train_loss:.4f}  clean={clean_acc:.2f}%  adv={adv_acc:.2f}%  test={test_acc:.2f}%")
 
@@ -126,8 +127,8 @@ def main():
             "test_clean_accuracy":  float(test_acc),
         })
 
-    torch.save(defense_model.state_dict(), save_path)
-    print(f"\nModel saved to {save_path}")
+    torch.save(base_model.state_dict(), defense_path )
+    print(f"\nModel saved to {defense_path}")
 
     if torch.cuda.is_available():
         torch.cuda.synchronize()
@@ -145,7 +146,8 @@ def main():
         "attack_params": attack_params,
         "epsilon":       args.epsilon,
 
-        "model_path":   save_path,
+        "model_path":   defense_path,
+    
         "duration_sec": float(duration),
     })
 
