@@ -1,4 +1,11 @@
 attack,steps,epsilon,best_accuracy
+fgsm,,0.0,98.97
+fgsm,,0.05,97.33
+fgsm,,0.1,94.07
+fgsm,,0.15,88.79
+fgsm,,0.2,81.45
+fgsm,,0.25,72.19
+fgsm,,0.3,62.9
 pgd,5.0,0.0,98.97
 pgd,5.0,0.05,96.86
 pgd,5.0,0.1,95.75
