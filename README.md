@@ -1,5 +1,7 @@
 # Adversarial ML
 
+Does the way you train defense determine how well it generalises to attacks it has never seem?
+
 Exploring adversarial attacks and defenses on CNN image classifiers.
 
 ## Overview
