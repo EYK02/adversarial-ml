@@ -21,12 +21,12 @@ def evaluate(model, device, loader, attack_fn=None, epsilon=None, criterion=None
             out = model(x)
 
             if use_loss:
-                loss = criterion(out, y)
+                loss        = criterion(out, y)
                 total_loss += loss.item()
 
-            pred = out.argmax(dim=1)
-            correct += (pred == y).sum().item()
-            total += y.size(0)
+            pred        = out.argmax(dim=1)
+            correct    += (pred == y).sum().item()
+            total      += y.size(0)
 
     acc = 100.0 * correct / total
 
