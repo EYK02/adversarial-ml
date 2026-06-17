@@ -1,4 +1,4 @@
-# results/visualize_attacks.py
+# tools/visualize_attacks.py
 
 import argparse
 import torch
@@ -90,7 +90,7 @@ def main():
 
     attack_tag = args.attack if args.steps is None else f"{args.attack}{args.steps}"
     model_tag  = args.model_path.replace("models/", "").replace(".pth", "")
-    save_path  = f"results/images/{attack_tag}_{model_tag}_visualization.png"
+    save_path  = f"artifacts/images/{attack_tag}_{model_tag}_visualization.png"
     title      = f"{attack_tag.upper()} on {model_tag} (green=correct, red=misclassified)"
 
     test_loader = get_mnist_test_loader(batch_size=1)

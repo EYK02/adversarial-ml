@@ -12,8 +12,8 @@ from src.utils.config import BATCH_SIZE, LEARNING_RATE, NUM_EPOCHS
 from src.evaluation.core import evaluate
 from src.logging.logger import JSONLLogger
 
-training_logger = JSONLLogger("results/jsonl/training.jsonl")   # change "results" to "artifacts"
-model_logger = JSONLLogger("results/jsonl/model_save.jsonl")    # same
+training_logger = JSONLLogger("artifacts/jsonl/training.jsonl")   
+model_logger = JSONLLogger("artifacts/jsonl/model_save.jsonl")    
 
 def train(model, device, loader, optimizer, criterion):
     model.train()
