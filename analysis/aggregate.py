@@ -3,9 +3,8 @@
 import pandas as pd
 
 
-# ─────────────────────────────────────────
-# BASELINE ATTACK
-# ─────────────────────────────────────────
+# Baseline Attack
+
 
 def attack_summary(df: pd.DataFrame) -> pd.DataFrame:
     """Mean, std, count of accuracy per attack + steps + epsilon across seeds."""
@@ -45,9 +44,8 @@ def best_accuracy(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-# ─────────────────────────────────────────
-# TRAINING
-# ─────────────────────────────────────────
+# Training
+
 
 def training_final(df: pd.DataFrame) -> pd.DataFrame:
     """Final epoch stats per seed."""
@@ -60,9 +58,8 @@ def training_final(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-# ─────────────────────────────────────────
-# DEFENSE
-# ─────────────────────────────────────────
+# Defense
+
 
 def defense_summary(df: pd.DataFrame) -> pd.DataFrame:
     """
