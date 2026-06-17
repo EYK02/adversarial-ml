@@ -23,3 +23,4 @@
 
 {"run_id": "adv_train_cnn_mnist_attackpgd_eps0.2_seed0", "run_type": "model_save", "model": "cnn_mnist", "dataset": "mnist", "seed": 0, "attack": "pgd", "attack_params": {"steps": 40}, "epsilon": 0.2, "model_path": "models/cnn_mnist_adv_pgd40_eps0.2_seed0.pth", "duration_sec": 6230.484146200004, "timestamp": "2026-06-16T17:27:59.297736"}
 
+{"run_id": "adv_train_cnn_mnist_attackpgd_eps0.2_seed2", "run_type": "model_save", "model": "cnn_mnist", "dataset": "mnist", "seed": 2, "attack": "pgd", "attack_params": {"steps": 20}, "epsilon": 0.2, "model_path": "models/cnn_mnist_adv_pgd20_eps0.2_seed2.pth", "duration_sec": 3570.776998599991, "timestamp": "2026-06-17T02:41:55.576025"}
