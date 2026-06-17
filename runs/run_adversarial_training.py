@@ -1,46 +1,43 @@
-# run_adversarial_training.py
+# runs/run_adversarial_training.py
 
 import sys
+from pathlib import Path
 from src.utils.runner import Experiment, ExperimentRunner
 
 TRAINING_EPSILON = 0.2
 SEEDS = list(range(5))
-
 PGD_STEPS = [5, 10, 20, 40]
 
 runner = ExperimentRunner()
-
 experiments = []
 
-for seed in SEEDS:
-    # FGSM defense
-    experiments.append(
-        Experiment(
-            f"FGSM defense seed={seed}",
-            [
-                sys.executable, "-m", "src.training.adversarial_training",
-                "--attack",  "fgsm",
-                "--epsilon", str(TRAINING_EPSILON),
-                "--seed",    str(seed),
-            ]
-        )
-    )
+for defense_attack, defense_steps in [("fgsm", None)] + [("pgd", s) for s in PGD_STEPS]:
+    for seed in SEEDS:
+        if defense_attack == "pgd" and defense_steps is not None:
+            attack_tag = f"pgd{defense_steps}"
+        else:
+            attack_tag = defense_attack
 
-# PGD defenses
-for steps in PGD_STEPS:
-    for seed in SEEDS:      
-        experiments.append(
-            Experiment(
-                f"PGD-{steps} defense seed={seed}",
-                [
-                    sys.executable, "-m", "src.training.adversarial_training",
-                    "--attack",  "pgd",
-                    "--steps",   str(steps),
-                    "--epsilon", str(TRAINING_EPSILON),
-                    "--seed",    str(seed),
-                ]                                           
-            )
-        )
+        model_path = Path(f"models/cnn_mnist_adv_{attack_tag}_eps{TRAINING_EPSILON}_seed{seed}.pth")
+
+        if model_path.exists():
+            print(f"Skipping {model_path.name} — already exists")
+            continue
+
+        cmd = [
+            sys.executable, "-m", "src.training.adversarial_training",
+            "--attack",  defense_attack,
+            "--epsilon", str(TRAINING_EPSILON),
+            "--seed",    str(seed),
+        ]
+        if defense_steps is not None:
+            cmd.extend(["--steps", str(defense_steps)])
+
+        attack_tag_label = f"{defense_attack}{defense_steps or ''}"
+        experiments.append(Experiment(
+            f"adv_train {attack_tag_label} seed={seed}",
+            cmd,
+        ))
 
 for exp in experiments:
     runner.run(exp)
