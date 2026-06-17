@@ -6,12 +6,19 @@ from src.utils.runner import Experiment, ExperimentRunner
 
 TRAINING_EPSILON = 0.2
 SEEDS = list(range(5))
-PGD_STEPS = [5, 10, 20, 40]
+
+DEFENSES = [
+    ("fgsm", None),
+    ("pgd",  5),
+    ("pgd",  10),
+    ("pgd",  20),
+    ("pgd",  40),
+]
 
 runner = ExperimentRunner()
 experiments = []
 
-for defense_attack, defense_steps in [("fgsm", None)] + [("pgd", s) for s in PGD_STEPS]:
+for defense_attack, defense_steps in DEFENSES:
     for seed in SEEDS:
         if defense_attack == "pgd" and defense_steps is not None:
             attack_tag = f"pgd{defense_steps}"
