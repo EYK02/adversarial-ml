@@ -48,9 +48,19 @@ class JSONLLogger:
         enriched = dict(record)
         enriched["timestamp"] = datetime.now().isoformat()
         return enriched
+    
+    def contains(self, run_id: str) -> bool:
+        """Check if a run_id already exists in the log."""
+        if not os.path.exists(self.filepath):
+            return False
+        with open(self.filepath, "r", encoding="utf-8") as f:
+            return any(
+                json.loads(line).get("run_id") == run_id
+                for line in f
+            )
 
 
-# Convenience function (optional functional API)
 def log_jsonl(filepath: str, record: Dict[str, Any]):
     logger = JSONLLogger(filepath)
     logger.log(record)
+    
