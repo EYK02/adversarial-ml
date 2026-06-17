@@ -2,8 +2,6 @@
 
 import torch
 import torch.nn as nn
-import torch
-import torch.nn as nn
 
 def pgd_attack(model, device, images, labels, epsilon, steps=40):
     alpha = min(0.01, epsilon / steps)
