@@ -3,7 +3,6 @@
 import argparse
 import time
 import torch
-from src.models.cnn import CNN
 from src.attacks.registry import get_attack_fn
 from src.data.loader import get_mnist_test_loader
 from src.utils.config import EPSILONS
