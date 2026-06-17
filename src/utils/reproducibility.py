@@ -1,4 +1,4 @@
-# utils/reproducibility.py
+# src/utils/reproducibility.py
 
 import torch
 import random
@@ -21,3 +21,6 @@ def set_seed(seed):
     torch.backends.cudnn.benchmark = False
 
     torch.use_deterministic_algorithms(True)
+
+def get_device():
+    return torch.device("cuda" if torch.cuda.is_available() else "cpu")

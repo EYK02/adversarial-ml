@@ -8,16 +8,12 @@ import torch.optim as optim
 from src.models.cnn import CNN
 from src.data.loader import get_mnist_train_loader, get_mnist_test_loader
 from src.utils.reproducibility import set_seed
+from src.utils.config import BATCH_SIZE, LEARNING_RATE, NUM_EPOCHS
 from src.evaluation.core import evaluate
 from src.logging.logger import JSONLLogger
 
-batch_size = 64
-learning_rate = 0.001
-num_epochs = 5
-
 training_logger = JSONLLogger("results/jsonl/training.jsonl")   # change "results" to "artifacts"
 model_logger = JSONLLogger("results/jsonl/model_save.jsonl")    # same
-
 
 def train(model, device, loader, optimizer, criterion):
     model.train()
@@ -49,14 +45,14 @@ def main():
     set_seed(args.seed)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    train_loader = get_mnist_train_loader(batch_size, seed=args.seed)
-    test_loader = get_mnist_test_loader(batch_size)
+    train_loader = get_mnist_train_loader(BATCH_SIZE, seed=args.seed)
+    test_loader = get_mnist_test_loader(BATCH_SIZE)
 
     model = CNN().to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)    # Optimizer: Adam
+    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)    # Optimizer: Adam
 
-    for epoch in range(num_epochs):
+    for epoch in range(NUM_EPOCHS):
         train_loss, train_acc = train(model, device, train_loader, optimizer, criterion)
         test_loss, test_acc = evaluate(model, device, test_loader, criterion=criterion)
 
@@ -86,10 +82,10 @@ def main():
         "model":        "cnn_mnist",
         "path":         model_save_path,
 
-        "batch_size":       int(batch_size),
-        "num_epochs":       int(num_epochs),
+        "BATCH_SIZE":       int(BATCH_SIZE),
+        "num_epochs":       int(NUM_EPOCHS),
         "optimizer":        "adam",
-        "learning_rate":    learning_rate
+        "LEARNING_RATE":    LEARNING_RATE
     })
     
 

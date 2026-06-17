@@ -1,29 +1,18 @@
-# defenses/evaluate_defense.py
+# src/evaluation/eval_robustness.py
 
 import argparse
 import time
 import torch
 from src.attacks.registry import get_attack_fn
 from src.data.loader import get_mnist_test_loader
-from src.utils.config import EPSILONS
-from src.models.factory import load_model
-from src.utils.reproducibility import set_seed
 from src.evaluation.core import evaluate
 from src.logging.logger import JSONLLogger
 from src.logging.run_id import make_run_id
-
-batch_size = 64
+from src.models.factory import load_model
+from src.utils.config import EPSILONS, BATCH_SIZE
+from src.utils.reproducibility import set_seed, get_device
 
 logger = JSONLLogger("results/jsonl/defense_eval.jsonl") # "artifacts/jsonl/defense_eval.jsonl"
-
-
-def _defense_model_path(attack: str, steps: int | None, epsilon: float, seed: int) -> str:
-    if attack == "pgd" and steps is not None:
-        attack_tag = f"pgd{steps}"
-    else:
-        attack_tag = attack
-    return f"models/cnn_mnist_adv_{attack_tag}_eps{epsilon}_seed{seed}.pth"
-
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate adversarial defense on MNIST")
@@ -37,30 +26,18 @@ def main():
 
     set_seed(args.seed)
 
-    run_id = make_run_id(
-        task="defense_eval",
-        model="cnn_mnist",
-        defense=args.defense_attack,
-        defense_steps=args.defense_steps,
-        eval_attack=args.eval_attack,
-        eval_steps=args.eval_steps,
-        defense_epsilon=args.defense_epsilon,
-        seed=args.seed,
-    )
+    device = get_device()
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    test_loader = get_mnist_test_loader(batch_size)
+    test_loader = get_mnist_test_loader(BATCH_SIZE)
 
     # baseline model
     base_model_path = f"models/cnn_mnist_seed{args.seed}.pth"
-    base_model = load_model(base_model_path, device)
+    base_model      = load_model(base_model_path, device)
 
     # defense model
-    defense_path = _defense_model_path(
-        args.defense_attack, args.defense_steps, args.defense_epsilon, args.seed
-    )
-    defense_model = load_model(defense_path, device)
+    attack_tag      = f'pgd{args.defense_steps}' if args.defense_attack == "pgd" and args.defense_steps is not None else args.defense_attack
+    defense_path    = f"models/cnn_mnist_adv_{attack_tag}_eps{args.epsilon}_seed{args.seed}.pth"
+    defense_model   = load_model(defense_path, device)
 
     # eval attack
     eval_attack_fn, eval_attack_params = get_attack_fn(args.eval_attack, steps=args.eval_steps)
@@ -74,6 +51,25 @@ def main():
     print(f"Defense eval — defense={defense_tag}, eval_attack={args.eval_attack}, seed={args.seed}\n")
 
     for epsilon in EPSILONS:
+        # Generate run_id
+        run_id = make_run_id(
+            task="defense_eval",
+            model="cnn_mnist",
+            defense=args.defense_attack,
+            defense_steps=args.defense_steps,
+            eval_attack=args.eval_attack,
+            eval_steps=args.eval_steps,
+            defense_epsilon=args.defense_epsilon,
+            epsilon=epsilon,
+            seed=args.seed,
+        )
+
+        # Skip if evaluation already exists
+        if logger.contains(run_id):
+            print(f"   Skipping eps={epsilon:.2f} (already completed)")
+            continue
+
+        # Evaluate (timed)
         start = time.perf_counter()
 
         base_acc    = evaluate(base_model,    device, test_loader, eval_attack_fn, epsilon)
@@ -81,11 +77,9 @@ def main():
 
         duration = time.perf_counter() - start
 
-        print(
-            f"  eps={epsilon:.2f}  base={base_acc:.2f}%  defense={defense_acc:.2f}%  "
-            f"delta={defense_acc - base_acc:+.2f}%"
-        )
+        print(f"  eps={epsilon:.2f}  base={base_acc:.2f}%  defense={defense_acc:.2f}%  delta={defense_acc - base_acc:+.2f}%")
 
+        # Log evaluation
         logger.log({
             "run_id":   run_id,
             "run_type": "defense_eval",
