@@ -1,5 +1,4 @@
-# utils/evaluation.py
-
+# src/evaluation/core.py
 import torch
 
 def evaluate(model, device, loader, attack_fn=None, epsilon=None, criterion=None):
@@ -34,7 +33,3 @@ def evaluate(model, device, loader, attack_fn=None, epsilon=None, criterion=None
     if use_loss:
         return total_loss / len(loader), acc
     return acc
-
-def attack_success_rate(model, device, loader, attack_fn, epsilon):
-    acc = evaluate(model, device, loader, attack_fn, epsilon)
-    return (1.0 - acc / 100.0) * 100

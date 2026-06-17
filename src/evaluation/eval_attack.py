@@ -1,21 +1,18 @@
-# attacks/evaluate_attack.py
+# src/evaluation/eval_attack.py
 
 import argparse
 import time
 import torch
-from src.models.factory import load_model
 from src.attacks.registry import get_attack_fn
-from src.utils.config import EPSILONS
 from src.data.loader import get_mnist_test_loader
 from src.evaluation.core import evaluate
 from src.logging.logger import JSONLLogger
-from src.utils.reproducibility import set_seed
 from src.logging.run_id import make_run_id
-
-batch_size = 64
+from src.models.factory import load_model
+from src.utils.config import EPSILONS, BATCH_SIZE
+from src.utils.reproducibility import set_seed, get_device
 
 logger = JSONLLogger("results/jsonl/attack_eval.jsonl") # "artifacts/jsonl/attack_eval.jsonl"
-
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate adversarial attack on MNIST")
@@ -26,38 +23,43 @@ def main():
 
     set_seed(args.seed)
 
+    test_loader = get_mnist_test_loader(BATCH_SIZE)
+
+    device  = get_device()
+
+    # baseline model
     base_model_path = f"models/cnn_mnist_seed{args.seed}.pth"
-
-    run_id = make_run_id(
-        task="attack_eval",
-        model="cnn_mnist",
-        attack=args.attack,
-        epsilon=None,
-        seed=args.seed,
-    )
-
-    device     = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = load_model(base_model_path, device)
-
+    base_model   = load_model(base_model_path, device)
 
     attack_fn, attack_params = get_attack_fn(args.attack, steps=args.steps)
-    test_loader = get_mnist_test_loader(batch_size)
 
     print(f"Attack eval — attack={args.attack}, params={attack_params}, seed={args.seed}\n")
 
     for epsilon in EPSILONS:
-        if torch.cuda.is_available():
-            torch.cuda.synchronize()
+        # Generate run_id
+        run_id = make_run_id(
+            task="attack_eval",
+            model="cnn_mnist",
+            attack=args.attack,
+            epsilon=epsilon,
+            seed=args.seed,
+        )
+
+        # Skip if evaluation already exists
+        if logger.contains(run_id):
+            print(f'   Skipping eps={epsilon:.2f} (already completed)')
+            continue
+
+        # Evaluate (timed)
         start = time.perf_counter()
 
-        acc = evaluate(model, device, test_loader, attack_fn, epsilon)
+        acc = evaluate(base_model, device, test_loader, attack_fn, epsilon)
 
-        if torch.cuda.is_available():
-            torch.cuda.synchronize()
         duration = time.perf_counter() - start
 
         print(f"  eps={epsilon:.2f}  acc={acc:.2f}%  ({duration:.1f}s)")
 
+        # Log evaluation
         logger.log({
             "run_id":        run_id,
             "run_type":      "attack_eval",
@@ -70,8 +72,7 @@ def main():
             "attack_params": attack_params,
             "epsilon":       float(epsilon),
 
-            "metric":        "accuracy",
-            "value":         float(acc),
+            "accuracy":      float(acc),
             "duration_sec":  float(duration),
         })
 
