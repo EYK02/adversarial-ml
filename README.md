@@ -33,7 +33,6 @@ adversarial-ml/
 ├── analysis/                   # log loading, normalization, aggregation, plots
 │   ├── schema.py               # authoritative normalized schema
 │   ├── load_logs.py
-│   ├── normalize.py
 │   ├── aggregate.py
 │   ├── plots.py
 │   └── report.py               # produces artifacts/
