@@ -13,6 +13,9 @@ if args.dry_run:
 else:
     from src.utils.config import NUM_SEEDS, EVAL_ATTACKS, DEFENSES
 
+dry_flag = ["--dry-run"] if args.dry_run else []
+
+
 DEFENSE_EPSILON = 0.2
 
 runner = ExperimentRunner()
@@ -42,7 +45,7 @@ for defense_attack, defense_steps in DEFENSES:
             experiments.append(
                 Experiment(
                     f"def={defense_tag} atk={eval_tag} seed={seed}",
-                    cmd,
+                    cmd + dry_flag,
                 )
             )
 
