@@ -2,7 +2,16 @@
 
 import sys
 from src.utils.runner import Experiment, ExperimentRunner
-from src.utils.config import EVAL_ATTACKS, DEFENSES, NUM_SEEDS
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--dry-run", action="store_true")
+args = parser.parse_args()
+
+if args.dry_run:
+    from src.utils.config import NUM_SEEDS_DRY as NUM_SEEDS, EVAL_ATTACKS_DRY as EVAL_ATTACKS, DEFENSES_DRY as DEFENSES
+else:
+    from src.utils.config import NUM_SEEDS, EVAL_ATTACKS, DEFENSES
 
 DEFENSE_EPSILON = 0.2
 

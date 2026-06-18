@@ -1,0 +1,1 @@
+{"run_id": "attack_eval_cnn_mnist_attackpgd_eps0.0_seed0", "run_type": "attack_eval", "model": "cnn_mnist", "model_path": "models/cnn_mnist_seed0.pth", "dataset": "mnist", "seed": 0, "attack": "pgd", "attack_params": {"steps": 10}, "epsilon": 0.0, "accuracy": 98.52, "duration_sec": 37.811969600006705, "timestamp": "2026-06-18T21:10:04.209726"}

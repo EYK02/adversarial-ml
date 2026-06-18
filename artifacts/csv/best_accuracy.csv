@@ -1,4 +1,8 @@
 attack,steps,epsilon,best_accuracy
 pgd,10,0.0,98.52
+pgd,10,0.05,94.77
 pgd,10,0.1,90.19
+pgd,10,0.15,87.04
+pgd,10,0.2,84.23
+pgd,10,0.25,81.84
 pgd,10,0.3,21.91
