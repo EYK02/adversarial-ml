@@ -11,7 +11,7 @@ args = parser.parse_args()
 if args.dry_run:
     from src.utils.config import NUM_SEEDS_DRY as NUM_SEEDS, DEFENSES_DRY as DEFENSES
 else:
-    from src.utils.config import NUM_SEEDS, DEFENSES as ATTACKS
+    from src.utils.config import NUM_SEEDS, ATTACKS as ATTACKS
 
 dry_flag = ["--dry-run"] if args.dry_run else []
 
