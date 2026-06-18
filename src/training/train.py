@@ -76,6 +76,7 @@ def main():
     torch.save(model.state_dict(), model_save_path)
 
     model_logger.log({
+        "run_id":       f"clean_cnn_mnist_seed{args.seed}",
         "run_type":     "model_save",
         "device":       str(device),
         "seed":         args.seed,
