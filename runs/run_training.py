@@ -14,8 +14,6 @@ if args.dry_run:
 else:
     from src.utils.config import NUM_SEEDS
 
-dry_flag = ["--dry-run"] if args.dry_run else []
-
 
 runner = ExperimentRunner()
 
@@ -28,7 +26,7 @@ for seed in range(NUM_SEEDS):
             [
                 sys.executable, "-m", "src.training.train",
                 "--seed", str(seed)
-            ] + dry_flag,
+            ],
         )
     )
 

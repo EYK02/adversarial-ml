@@ -9,30 +9,30 @@ parser.add_argument("--dry-run", action="store_true")
 args = parser.parse_args()
 
 if args.dry_run:
-    from src.utils.config import NUM_SEEDS_DRY as NUM_SEEDS
+    from src.utils.config import NUM_SEEDS_DRY as NUM_SEEDS, DEFENSES_DRY as DEFENSES
 else:
-    from src.utils.config import NUM_SEEDS
+    from src.utils.config import NUM_SEEDS, DEFENSES as ATTACKS
 
 dry_flag = ["--dry-run"] if args.dry_run else []
 
 runner = ExperimentRunner()
 
-pgd_steps = [10]
 
 experiments = []
 
 for seed in range(NUM_SEEDS):
-    for steps in pgd_steps:
+    for attack, steps in ATTACKS:
+        cmd = [
+            sys.executable, "-m", "src.evaluation.eval_attack",
+            "--attack", attack,
+            "--seed", str(seed),
+        ]
+        if steps is not None:
+            cmd.extend(["--steps", str(steps)])
+        cmd += dry_flag
+
         experiments.append(
-            Experiment(
-                f"pgd steps={steps} seed={seed}",
-                [
-                    sys.executable, "-m", "src.evaluation.eval_attack",
-                    "--attack", "pgd",
-                    "--steps", str(steps),
-                    "--seed", str(seed),
-                ] + dry_flag,
-            )
+            Experiment(f"{attack} steps={steps} seed={seed}", cmd)
         )
 
 for exp in experiments:
