@@ -70,30 +70,31 @@ def _seed_variance_panel(ax, df, attack, steps=None):
     ax.set_xlabel("epsilon")
     ax.set_ylabel("accuracy (%)")
 
-def plot_seed_variance(df: pd.DataFrame) -> plt.Figure:
-    # Build ordered list: FGSM first, then PGD-5/10/20/40
-    configs = [("fgsm", None)]
-    pgd = df[df["attack"] == "pgd"]
-    for steps in sorted(pgd["steps"].dropna().unique()):
-        configs.append(("pgd", steps))
+def plot_fgsm_seed_variance(df: pd.DataFrame) -> plt.Figure:
+    fig, ax = plt.subplots(figsize=(6, 4))
+    _seed_variance_panel(ax, df, attack="fgsm", steps=None)
 
-    n = len(configs)  # 5
-    ncols = 3
-    nrows = (n + ncols - 1) // ncols  # 2 rows
+    fig.suptitle("FGSM — per-seed variance")
+    fig.tight_layout()
+    return fig
+
+def plot_pgd_seed_variance(df: pd.DataFrame) -> plt.Figure:
+    pgd = df[df["attack"] == "pgd"]
+    steps_list = sorted(pgd["steps"].dropna().unique())
+
+    ncols = 2
+    nrows = (len(steps_list) + ncols - 1) // ncols
 
     fig, axes = plt.subplots(nrows, ncols, figsize=(6 * ncols, 4 * nrows), sharey=True)
-    axes_flat = axes.flatten()
+    axes = axes.flatten()
 
-    for ax, (attack, steps) in zip(axes_flat, configs):
-        _seed_variance_panel(ax, df, attack=attack, steps=steps)
+    for ax, steps in zip(axes, steps_list):
+        _seed_variance_panel(ax, df, attack="pgd", steps=steps)
 
-    for ax in axes_flat[n:]:
+    for ax in axes[len(steps_list):]:
         ax.set_visible(False)
 
-    handles, labels = axes_flat[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=6, fontsize=8,
-               bbox_to_anchor=(0.5, -0.02))
-    fig.suptitle("Per-seed variance — all attacks")
+    fig.suptitle("PGD — per-seed variance across steps")
     fig.tight_layout()
     return fig
 

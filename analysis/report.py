@@ -17,7 +17,8 @@ from analysis.aggregate import (
 from analysis.plots import (
     plot_training_curves,
     plot_robustness,
-    plot_seed_variance,
+    plot_fgsm_seed_variance,
+    plot_pgd_seed_variance,
     plot_steps_scaling,
     plot_defense_robustness,
     plot_crosseval_heatmap,
@@ -62,8 +63,14 @@ def main():
     best_accuracy(attack_df).to_csv(CSV_DIR / "best_accuracy.csv", index=False)
 
     # ── seed variance ────────────────────────────────────────────
-    print("\nSeed variance...")
-    _save_fig(plot_seed_variance(attack_df), "seed_variance.png")
+    print("\nFGSM seed variance...")
+    fgsm_fig = plot_fgsm_seed_variance(attack_df)
+    _save_fig(fgsm_fig, "fgsm_seed_variance.png")
+
+    print("\nPGD seed variance...")
+    pgd_fig = plot_pgd_seed_variance(attack_df)
+    _save_fig(pgd_fig, "pgd_seed_variance.png")
+
     variance = seed_variance(attack_df)
     variance.to_csv(CSV_DIR / "seed_variance.csv", index=False)
     print(variance.to_string(index=False))
