@@ -251,45 +251,48 @@ def plot_crosseval_heatmap(df: pd.DataFrame, epsilon: float) -> plt.Figure:
 # BASELINE VS DEFENSE COMPARISON
 # ─────────────────────────────────────────
 
-def plot_defense_vs_baseline(df: pd.DataFrame, eval_attack: str, eval_steps: int | None = None) -> plt.Figure:
+def plot_defense_vs_baseline(df: pd.DataFrame) -> plt.Figure:
     """
-    For each defense, plot baseline_accuracy and defense_accuracy
-    vs epsilon side by side to show the lift.
+    For each defense, plot baseline, FGSM-eval, and PGD-40-eval accuracy
+    vs epsilon to show lift and generalisation gap.
     """
-    mask = df["eval_attack"] == eval_attack
-    if eval_steps is not None:
-        mask &= df["eval_steps"] == eval_steps
-    d = df[mask]
-
-    eval_tag = eval_attack.upper() if eval_steps is None else f"PGD-{eval_steps}"
+    eval_configs = [
+        ("fgsm", None,  "FGSM",   "blue"),
+        ("pgd",  40,    "PGD-40", "red"),
+    ]
 
     defense_configs = (
-        d.groupby(["defense_attack", "defense_steps"], dropna=False)
-         .size()
-         .reset_index()[["defense_attack", "defense_steps"]]
+        df.groupby(["defense_attack", "defense_steps"], dropna=False)
+          .size()
+          .reset_index()[["defense_attack", "defense_steps"]]
     )
 
-    n      = len(defense_configs)
-    ncols  = 3
-    nrows  = (n + ncols - 1) // ncols
+    n     = len(defense_configs)
+    ncols = 3
+    nrows = (n + ncols - 1) // ncols
     fig, axes = plt.subplots(nrows, ncols, figsize=(5 * ncols, 4 * nrows), sharey=True)
     axes_flat = axes.flatten() if n > 1 else [axes]
 
     for ax, (_, row) in zip(axes_flat, defense_configs.iterrows()):
         d_attack, d_steps = row["defense_attack"], row["defense_steps"]
 
-        mask2 = d["defense_attack"] == d_attack
+        mask = df["defense_attack"] == d_attack
         if pd.notna(d_steps):
-            mask2 &= d["defense_steps"] == d_steps
+            mask &= df["defense_steps"] == d_steps
+        d = df[mask]
 
-        sub = d[mask2].groupby("epsilon")[["baseline_accuracy", "defense_accuracy"]].mean().reset_index()
+        for eval_attack, eval_steps, eval_label, color in eval_configs:
+            emask = d["eval_attack"] == eval_attack
+            if eval_steps is not None:
+                emask &= d["eval_steps"] == eval_steps
+            sub = d[emask].groupby("epsilon")[["baseline_accuracy", "defense_accuracy"]].mean().reset_index()
 
-        ax.plot(sub["epsilon"], sub["baseline_accuracy"],
-                marker="o", linestyle="--", color="gray", label="baseline")
-        ax.plot(sub["epsilon"], sub["defense_accuracy"],
-                marker="o", label="defended")
-        ax.fill_between(sub["epsilon"], sub["baseline_accuracy"], sub["defense_accuracy"],
-                        alpha=0.1, color="green")
+            ax.plot(sub["epsilon"], sub["baseline_accuracy"],
+                    marker="o", linestyle="--", color=color, alpha=0.4,
+                    label=f"Undefended ({eval_label})")
+            ax.plot(sub["epsilon"], sub["defense_accuracy"],
+                    marker="o", color=color, 
+                    label=f"Defended ({eval_label})")
 
         label = d_attack.upper() if pd.isna(d_steps) else f"PGD-{int(d_steps)}"
         ax.set_title(label)
@@ -301,7 +304,7 @@ def plot_defense_vs_baseline(df: pd.DataFrame, eval_attack: str, eval_steps: int
     for ax in axes_flat[n:]:
         ax.set_visible(False)
 
-    fig.suptitle(f"Baseline vs defense under {eval_tag} (mean across seeds)")
+    fig.suptitle("Undefended vs defended — FGSM and PGD-40 evaluation (mean across seeds)")
     fig.tight_layout()
     return fig
 

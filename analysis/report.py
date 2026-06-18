@@ -86,12 +86,8 @@ def main():
 
     print("Baseline vs defense comparison...")
     _save_fig(
-        plot_defense_vs_baseline(defense_df, eval_attack="fgsm"),
-        "defense_vs_baseline_fgsm.png"
-    )
-    _save_fig(
-        plot_defense_vs_baseline(defense_df, eval_attack="pgd", eval_steps=40),
-        "defense_vs_baseline_pgd40.png"
+        plot_defense_vs_baseline(defense_df),
+        "defense_vs_baseline.png"
     )
 
     print("Cross-evaluation heatmap...")
