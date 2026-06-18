@@ -57,6 +57,7 @@ def main():
         test_loss, test_acc = evaluate(model, device, test_loader, criterion=criterion)
 
         training_logger.log({
+            "run_id":       "cnn_mnist_clean",
             "run_type":     "training",
 
             "dataset":      "mnist",
