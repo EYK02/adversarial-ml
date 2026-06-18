@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 
 def pgd_attack(model, device, images, labels, epsilon, steps=40):
-    alpha = min(0.01, epsilon / steps)
+    alpha = epsilon / steps
     images = images.clone().detach().to(device)
     labels = labels.clone().detach().to(device)
 
