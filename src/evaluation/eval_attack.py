@@ -22,9 +22,9 @@ def main():
     args = parser.parse_args()
 
     if args.dry_run:
-        from src.utils.config import EPSILONS_DRY as EPSILONS, DEFENSES_DRY as DEFENSES, EVAL_ATTACKS_DRY as EVAL_ATTACKS, NUM_SEEDS_DRY as SEEDS
+        from src.utils.config import EPSILONS_DRY as EPSILONS, DEFENSES_DRY as DEFENSES, EVAL_ATTACKS_DRY as EVAL_ATTACKS
     else:
-        from src.utils.config import EPSILONS as EPSILONS, DEFENSES as DEFENSES, EVAL_ATTACKS as EVAL_ATTACKS, NUM_SEEDS as SEEDS
+        from src.utils.config import EPSILONS as EPSILONS, DEFENSES as DEFENSES, EVAL_ATTACKS as EVAL_ATTACKS
 
     set_seed(args.seed)
     device  = get_device()
