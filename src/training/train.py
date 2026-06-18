@@ -44,6 +44,8 @@ def main():
     args = parser.parse_args()
     set_seed(args.seed)
 
+    model_save_path = f'models/cnn_mnist_seed{args.seed}.pth'
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     train_loader = get_mnist_train_loader(BATCH_SIZE, seed=args.seed)
     test_loader = get_mnist_test_loader(BATCH_SIZE)
@@ -51,6 +53,11 @@ def main():
     model = CNN().to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)    # Optimizer: Adam
+
+    if os.path.exists(model_save_path):
+        model.load_state_dict(torch.load(model_save_path))
+        print("[LOAD] Existing model found, skipping training.")
+        return
 
     for epoch in range(NUM_EPOCHS):
         train_loss, train_acc = train(model, device, train_loader, optimizer, criterion)
@@ -72,7 +79,6 @@ def main():
             "test_accuracy":    float(test_acc)
         })
 
-    model_save_path = f'models/cnn_mnist_seed{args.seed}.pth'
     torch.save(model.state_dict(), model_save_path)
 
     model_logger.log({

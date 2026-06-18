@@ -2,29 +2,24 @@
 
 import sys
 from src.utils.runner import Experiment, ExperimentRunner
+from src.utils.config import NUM_SEEDS
 
 runner = ExperimentRunner()
 
-pgd_steps = [5, 10, 20, 40]
-seeds = range(5)
+pgd_steps = [10]
 
 experiments = []
 
-for seed in seeds:
+for seed in range(NUM_SEEDS):
     for steps in pgd_steps:
         experiments.append(
             Experiment(
                 f"pgd steps={steps} seed={seed}",
                 [
-                    sys.executable,
-                    "-m",
-                    "attacks.evaluate_attack",
-                    "--attack",
-                    "pgd",
-                    "--steps",
-                    str(steps),
-                    "--seed",
-                    str(seed),
+                    sys.executable, "-m", "src.evaluation.eval_attack",
+                    "--attack", "pgd",
+                    "--steps", str(steps),
+                    "--seed", str(seed),
                 ],
             )
         )

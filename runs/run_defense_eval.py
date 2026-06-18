@@ -2,28 +2,15 @@
 
 import sys
 from src.utils.runner import Experiment, ExperimentRunner
+from src.utils.config import EVAL_ATTACKS, DEFENSES, NUM_SEEDS
 
 DEFENSE_EPSILON = 0.2
-SEEDS = list(range(5))
-
-DEFENSES = [
-    ("fgsm", None),
-    ("pgd",  5),
-    ("pgd",  10),
-    ("pgd",  20),
-    ("pgd",  40),
-]
-
-EVAL_ATTACKS = [
-    ("fgsm", None),
-    ("pgd",  40),
-]
 
 runner = ExperimentRunner()
 experiments = []
 
 for defense_attack, defense_steps in DEFENSES:
-    for seed in SEEDS:
+    for seed in range(NUM_SEEDS):
         for eval_attack, eval_steps in EVAL_ATTACKS:
 
             cmd = [
