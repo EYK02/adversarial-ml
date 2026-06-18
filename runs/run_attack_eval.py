@@ -13,6 +13,8 @@ if args.dry_run:
 else:
     from src.utils.config import NUM_SEEDS
 
+dry_flag = ["--dry-run"] if args.dry_run else []
+
 runner = ExperimentRunner()
 
 pgd_steps = [10]
@@ -29,7 +31,7 @@ for seed in range(NUM_SEEDS):
                     "--attack", "pgd",
                     "--steps", str(steps),
                     "--seed", str(seed),
-                ],
+                ] + dry_flag,
             )
         )
 
