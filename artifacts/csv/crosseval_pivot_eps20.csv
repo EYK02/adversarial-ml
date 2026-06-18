@@ -1,0 +1,4 @@
+defense_label,FGSM
+Undefended,79.45
+FGSM,98.34
+PGD-10,97.97

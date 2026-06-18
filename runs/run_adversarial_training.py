@@ -3,7 +3,16 @@
 import sys
 from pathlib import Path
 from src.utils.runner import Experiment, ExperimentRunner
-from src.utils.config import DEFENSES, NUM_SEEDS
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--dry-run", action="store_true")
+args = parser.parse_args()
+
+if args.dry_run:
+    from src.utils.config import NUM_SEEDS_DRY as NUM_SEEDS, DEFENSES_DRY as DEFENSES
+else:
+    from src.utils.config import NUM_SEEDS, DEFENSES
 
 TRAINING_EPSILON = 0.2
 

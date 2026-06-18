@@ -2,7 +2,16 @@
 
 import sys
 from src.utils.runner import Experiment, ExperimentRunner
-from src.utils.config import NUM_SEEDS
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--dry-run", action="store_true")
+args = parser.parse_args()
+
+if args.dry_run:
+    from src.utils.config import NUM_SEEDS_DRY as NUM_SEEDS
+else:
+    from src.utils.config import NUM_SEEDS
 
 runner = ExperimentRunner()
 

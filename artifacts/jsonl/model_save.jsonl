@@ -1,0 +1,1 @@
+{"run_id": "clean_cnn_mnist_seed0", "run_type": "model_save", "device": "cpu", "seed": 0, "model": "cnn_mnist", "path": "models/cnn_mnist_seed0.pth", "BATCH_SIZE": 64, "num_epochs": 5, "optimizer": "adam", "LEARNING_RATE": 0.001, "timestamp": "2026-06-18T21:09:22.290313"}

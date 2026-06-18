@@ -21,7 +21,14 @@ def main():
     parser.add_argument("--eval_attack",     type=str,   required=True, help="Attack to evaluate against (fgsm, pgd)")
     parser.add_argument("--eval_steps",      type=int,   default=None,  help="PGD steps for evaluation attack (PGD only)")
     parser.add_argument("--seed",            type=int,   default=0,     help="Random seed")
+    parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
+
+    if args.dry_run:
+        from src.utils.config import EPSILONS_DRY as EPSILONS, DEFENSES_DRY as DEFENSES, EVAL_ATTACKS_DRY as EVAL_ATTACKS, NUM_SEEDS_DRY as SEEDS
+    else:
+        from src.utils.config import EPSILONS as EPSILONS, DEFENSES as DEFENSES, EVAL_ATTACKS as EVAL_ATTACKS, NUM_SEEDS as SEEDS
+
     set_seed(args.seed)
     device = get_device()
     test_loader = get_mnist_test_loader(BATCH_SIZE)
