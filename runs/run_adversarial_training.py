@@ -3,23 +3,15 @@
 import sys
 from pathlib import Path
 from src.utils.runner import Experiment, ExperimentRunner
+from src.utils.config import DEFENSES, NUM_SEEDS
 
 TRAINING_EPSILON = 0.2
-SEEDS = list(range(5))
-
-DEFENSES = [
-    ("fgsm", None),
-    ("pgd",  5),
-    ("pgd",  10),
-    ("pgd",  20),
-    ("pgd",  40),
-]
 
 runner = ExperimentRunner()
 experiments = []
 
 for defense_attack, defense_steps in DEFENSES:
-    for seed in SEEDS:
+    for seed in range(NUM_SEEDS):
         if defense_attack == "pgd" and defense_steps is not None:
             attack_tag = f"pgd{defense_steps}"
         else:

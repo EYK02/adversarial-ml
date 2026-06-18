@@ -1,5 +1,6 @@
 # src/training/adversarial_training.py
 
+import os
 import argparse
 import time
 import torch
@@ -83,15 +84,20 @@ def main():
         task="adv_train",
         model="cnn_mnist",
         attack=args.attack,
+        steps=args.steps,
         epsilon=args.epsilon,
         seed=args.seed,
     )
 
+    defense_path    = f"models/{run_id}.pth"
+
+    if os.path.exists(defense_path):
+        print(f"[SKIP] Already exists: {defense_path}")
+        return
+
     base_model_path = f"models/cnn_mnist_seed{args.seed}.pth"
     base_model      = load_model(base_model_path, device)
     
-    defense_tag     = f'pgd{args.defense_steps}' if args.defense_attack == "pgd" and args.defense_steps is not None else args.defense_attack
-    defense_path    = f"models/cnn_mnist_adv_{defense_tag}_eps{args.epsilon}_seed{args.seed}.pth"
 
     optimizer = optim.Adam(base_model.parameters(), lr=LEARNING_RATE)
     criterion = nn.CrossEntropyLoss()
@@ -99,7 +105,11 @@ def main():
     # Get attack
     attack_fn, attack_params = get_attack_fn(args.attack, steps=args.steps)
 
-    print(f"Adversarial training — attack={defense_tag}, epsilon={args.epsilon}, seed={args.seed}\n")
+    attack_label = f"{args.attack}"
+    if args.attack == "pgd":
+        attack_label += f"-{args.steps}"
+
+    print(f"Adversarial training — {attack_label}, epsilon={args.epsilon}, seed={args.seed}")
 
     for epoch in range(1, NUM_EPOCHS + 1):
         train_loss, clean_acc, adv_acc = train_adversarial(

@@ -31,8 +31,8 @@ def main():
     base_model      = load_model(base_model_path, device)
 
     # defense model
-    defense_tag      = f'pgd{args.defense_steps}' if args.defense_attack == "pgd" and args.defense_steps is not None else args.defense_attack
-    defense_path    = f"models/cnn_mnist_adv_{defense_tag}_eps{args.defense_epsilon}_seed{args.seed}.pth"
+    defense_tag      = f'pgd_steps{args.defense_steps}' if args.defense_attack == "pgd" and args.defense_steps is not None else args.defense_attack
+    defense_path    = f"models/adv_train_cnn_mnist_attack{defense_tag}_eps{args.defense_epsilon}_seed{args.seed}.pth"
     defense_model   = load_model(defense_path, device)
 
     # eval attack
