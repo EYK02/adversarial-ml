@@ -131,8 +131,23 @@ def crosseval_pivot(df: pd.DataFrame, epsilon: float) -> pd.DataFrame:
         lambda r: eval_label(r["eval_attack"], r["eval_steps"]), axis=1
     )
 
-    return (
+    baseline = (
+        d.groupby("eval_label")["baseline_accuracy"]
+         .mean()
+    )
+    baseline_row = pd.DataFrame([baseline], index=["Undefended"])
+    
+    pivot = (
         d.groupby(["defense_label", "eval_label"])["defense_accuracy"]
          .mean()
          .unstack()
     )
+    pivot = pd.concat([baseline_row, pivot])
+
+    row_order = ["Undefended", "FGSM"] + [f"PGD-{s}" for s in [5, 10, 20, 40]]
+    col_order = ["FGSM", "PGD-40"]
+    pivot = pivot.reindex(
+        index=[r for r in row_order if r in pivot.index],
+        columns=[c for c in col_order if c in pivot.columns]
+    )
+    return pivot
