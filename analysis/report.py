@@ -91,10 +91,10 @@ def main():
     )
 
     print("Cross-evaluation heatmap...")
-    for eps in [0.1, 0.2, 0.3]:
+    for eps in [0.0, 0.1, 0.2, 0.3]:
         _save_fig(
             plot_crosseval_heatmap(defense_df, epsilon=eps),
-            f"crosseval_heatmap_eps{int(eps * 100):02d}.png"
+            f"crosseval_heatmap_eps{int(eps*100):02d}.png"
         )
 
     print("Defense summary tables...")
@@ -103,9 +103,9 @@ def main():
     defense_seed_variance(defense_df).to_csv(CSV_DIR / "defense_seed_variance.csv", index=False)
 
     print("Cross-evaluation pivot tables...")
-    for eps in [0.1, 0.2, 0.3]:
+    for eps in [0.0, 0.1, 0.2, 0.3]:
         pivot = crosseval_pivot(defense_df, epsilon=eps)
-        pivot.to_csv(CSV_DIR / f"crosseval_pivot_eps{int(eps * 100):02d}.csv")
+        pivot.to_csv(CSV_DIR / f"crosseval_pivot_eps{int(eps*100):02d}.csv", index_label="defense_label")
         print(f"\n  Cross-eval at ε={eps:.1f}:")
         print(pivot.to_string())
 

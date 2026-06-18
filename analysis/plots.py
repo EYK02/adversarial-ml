@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 from matplotlib.ticker import MultipleLocator
+from .aggregate import crosseval_pivot
 
 
 # ─────────────────────────────────────────
@@ -201,30 +202,8 @@ def plot_crosseval_heatmap(df: pd.DataFrame, epsilon: float) -> plt.Figure:
     At a fixed epsilon, grid of defense (rows) vs eval_attack (cols)
     showing mean defense_accuracy across seeds.
     """
-    d = df[df["epsilon"].round(4) == round(epsilon, 4)]
-
-    def defense_label(attack, steps):
-        return attack.upper() if pd.isna(steps) else f"PGD-{int(steps)}"
-
-    def eval_label(attack, steps):
-        return attack.upper() if pd.isna(steps) else f"PGD-{int(steps)}"
-
-    d = d.copy()
-    d["defense_label"] = d.apply(lambda r: defense_label(r["defense_attack"], r["defense_steps"]), axis=1)
-    d["eval_label"]    = d.apply(lambda r: eval_label(r["eval_attack"], r["eval_steps"]), axis=1)
-
-    pivot = (
-        d.groupby(["defense_label", "eval_label"])["defense_accuracy"]
-         .mean()
-         .unstack()
-    )
-
-    # row order: FGSM, PGD-5, PGD-10, PGD-20, PGD-40
-    row_order = ["FGSM"] + [f"PGD-{s}" for s in [5, 10, 20, 40]]
-    col_order = ["FGSM", "PGD-40"]
-    pivot = pivot.reindex(index=[r for r in row_order if r in pivot.index],
-                          columns=[c for c in col_order if c in pivot.columns])
-
+    pivot = crosseval_pivot(df, epsilon)
+    
     fig, ax = plt.subplots(figsize=(6, 5))
     im = ax.imshow(pivot.values, vmin=0, vmax=100, cmap="RdYlGn", aspect="auto")
     plt.colorbar(im, ax=ax, label="accuracy (%)")
