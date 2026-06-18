@@ -269,12 +269,13 @@ def plot_defense_vs_baseline(df: pd.DataFrame, eval_attack: str, eval_steps: int
          .reset_index()[["defense_attack", "defense_steps"]]
     )
 
-    n = len(defense_configs)
-    fig, axes = plt.subplots(1, n, figsize=(5 * n, 4), sharey=True)
-    if n == 1:
-        axes = [axes]
+    n      = len(defense_configs)
+    ncols  = 3
+    nrows  = (n + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols, figsize=(5 * ncols, 4 * nrows), sharey=True)
+    axes_flat = axes.flatten() if n > 1 else [axes]
 
-    for ax, (_, row) in zip(axes, defense_configs.iterrows()):
+    for ax, (_, row) in zip(axes_flat, defense_configs.iterrows()):
         d_attack, d_steps = row["defense_attack"], row["defense_steps"]
 
         mask2 = d["defense_attack"] == d_attack
@@ -293,15 +294,16 @@ def plot_defense_vs_baseline(df: pd.DataFrame, eval_attack: str, eval_steps: int
         label = d_attack.upper() if pd.isna(d_steps) else f"PGD-{int(d_steps)}"
         ax.set_title(label)
         ax.set_xlabel("epsilon")
-        if ax is axes[0]:
-            ax.set_ylabel("accuracy (%)")
+        ax.set_ylabel("accuracy (%)")
         ax.legend(fontsize=8)
         ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
+
+    for ax in axes_flat[n:]:
+        ax.set_visible(False)
 
     fig.suptitle(f"Baseline vs defense under {eval_tag} (mean across seeds)")
     fig.tight_layout()
     return fig
-
 
 # ─────────────────────────────────────────
 # TRAINING CURVES
