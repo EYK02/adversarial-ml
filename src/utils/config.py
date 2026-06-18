@@ -21,4 +21,4 @@ DEFENSES = [("fgsm", None), ("pgd", 10)]  #dry run
 
 #EVAL_ATTACKS = [("fgsm", None), ("pgd", 40)]
 
-EVAL_ATTACKS = [("fgsm", None), ("pgd", 41)] #dry
+EVAL_ATTACKS = [("fgsm", None), ("pgd", 10)] #dry
