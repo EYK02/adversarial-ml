@@ -9,47 +9,34 @@ import numpy as np
 # ─────────────────────────────────────────
 # BASELINE ROBUSTNESS
 # ─────────────────────────────────────────
+def plot_robustness(df: pd.DataFrame) -> plt.Figure:
+    fig, ax = plt.subplots(figsize=(8, 4))
 
-def plot_robustness_fgsm(df: pd.DataFrame) -> plt.Figure:
+    # FGSM
     fgsm = df[df["attack"] == "fgsm"]
     grouped = fgsm.groupby("epsilon")["accuracy"].agg(["mean", "std"]).reset_index()
-
-    fig, ax = plt.subplots(figsize=(7, 4))
-    ax.plot(grouped["epsilon"], grouped["mean"], marker="o")
+    line, = ax.plot(grouped["epsilon"], grouped["mean"], marker="o", label="FGSM")
     ax.fill_between(
         grouped["epsilon"],
         grouped["mean"] - grouped["std"],
         grouped["mean"] + grouped["std"],
-        alpha=0.2,
+        alpha=0.15, color=line.get_color(),
     )
-    ax.set_title("FGSM — accuracy vs epsilon (mean ± 1σ across seeds)")
-    ax.set_xlabel("epsilon")
-    ax.set_ylabel("accuracy (%)")
-    ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
-    fig.tight_layout()
-    return fig
 
-
-def plot_robustness_pgd(df: pd.DataFrame) -> plt.Figure:
+    # PGD variants
     pgd = df[df["attack"] == "pgd"]
-    steps_list = sorted(pgd["steps"].dropna().unique())
-
-    fig, ax = plt.subplots(figsize=(8, 4))
-
-    for steps in steps_list:
+    for steps in sorted(pgd["steps"].dropna().unique()):
         d = pgd[pgd["steps"] == steps]
         grouped = d.groupby("epsilon")["accuracy"].agg(["mean", "std"]).reset_index()
-
         line, = ax.plot(grouped["epsilon"], grouped["mean"], marker="o", label=f"PGD-{int(steps)}")
         ax.fill_between(
             grouped["epsilon"],
             grouped["mean"] - grouped["std"],
             grouped["mean"] + grouped["std"],
-            alpha=0.15,
-            color=line.get_color(),
+            alpha=0.15, color=line.get_color(),
         )
 
-    ax.set_title("PGD — accuracy vs epsilon (mean ± 1σ across seeds)")
+    ax.set_title("Baseline robustness — accuracy vs epsilon (mean ± 1σ across seeds)")
     ax.set_xlabel("epsilon")
     ax.set_ylabel("accuracy (%)")
     ax.legend(fontsize=8)
@@ -81,36 +68,30 @@ def _seed_variance_panel(ax, df, attack, steps=None):
     ax.set_xlabel("epsilon")
     ax.set_ylabel("accuracy (%)")
 
-
-def plot_seed_variance_fgsm(df: pd.DataFrame) -> plt.Figure:
-    fig, ax = plt.subplots(figsize=(7, 4))
-    _seed_variance_panel(ax, df, attack="fgsm")
-
-    handles, labels = ax.get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=6, fontsize=8,
-               bbox_to_anchor=(0.5, -0.08))
-    fig.tight_layout()
-    return fig
-
-
-def plot_seed_variance_pgd(df: pd.DataFrame) -> plt.Figure:
+def plot_seed_variance(df: pd.DataFrame) -> plt.Figure:
+    # Build ordered list: FGSM first, then PGD-5/10/20/40
+    configs = [("fgsm", None)]
     pgd = df[df["attack"] == "pgd"]
-    steps_list = sorted(pgd["steps"].dropna().unique())
+    for steps in sorted(pgd["steps"].dropna().unique()):
+        configs.append(("pgd", steps))
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8), sharey=True)
+    n = len(configs)  # 5
+    ncols = 3
+    nrows = (n + ncols - 1) // ncols  # 2 rows
+
+    fig, axes = plt.subplots(nrows, ncols, figsize=(6 * ncols, 4 * nrows), sharey=True)
     axes_flat = axes.flatten()
 
-    for ax, steps in zip(axes_flat, steps_list):
-        _seed_variance_panel(ax, df, attack="pgd", steps=steps)
+    for ax, (attack, steps) in zip(axes_flat, configs):
+        _seed_variance_panel(ax, df, attack=attack, steps=steps)
 
-    # hide unused panels if fewer than 4
-    for ax in axes_flat[len(steps_list):]:
+    for ax in axes_flat[n:]:
         ax.set_visible(False)
 
     handles, labels = axes_flat[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="lower center", ncol=6, fontsize=8,
-               bbox_to_anchor=(0.5, -0.04))
-    fig.suptitle("PGD — per-seed variance")
+               bbox_to_anchor=(0.5, -0.02))
+    fig.suptitle("Per-seed variance — all attacks")
     fig.tight_layout()
     return fig
 
@@ -172,7 +153,7 @@ def plot_defense_robustness(df: pd.DataFrame, eval_attack: str, eval_steps: int 
 
     # one line per defense config
     defense_configs = (
-        d.groupby(["defense_attack", "defense_steps"])
+        d.groupby(["defense_attack", "defense_steps"], dropna=False)
          .size()
          .reset_index()[["defense_attack", "defense_steps"]]
     )
@@ -283,7 +264,7 @@ def plot_defense_vs_baseline(df: pd.DataFrame, eval_attack: str, eval_steps: int
     eval_tag = eval_attack.upper() if eval_steps is None else f"PGD-{eval_steps}"
 
     defense_configs = (
-        d.groupby(["defense_attack", "defense_steps"])
+        d.groupby(["defense_attack", "defense_steps"], dropna=False)
          .size()
          .reset_index()[["defense_attack", "defense_steps"]]
     )
