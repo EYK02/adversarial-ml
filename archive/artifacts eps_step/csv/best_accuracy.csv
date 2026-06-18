@@ -1,4 +1,0 @@
-attack,steps,epsilon,best_accuracy
-pgd,10,0.0,98.52
-pgd,10,0.1,90.19
-pgd,10,0.3,21.91
