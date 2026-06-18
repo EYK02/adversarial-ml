@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
+from matplotlib.ticker import MultipleLocator
 
 
 # ─────────────────────────────────────────
@@ -320,11 +321,14 @@ def plot_training_curves(df: pd.DataFrame) -> plt.Figure:
         axes[0].plot(g["epoch"], g["train_loss"], label=f"seed {seed}")
         axes[1].plot(g["epoch"], g["test_accuracy"], label=f"seed {seed}")
 
+    axes[0].xaxis.set_major_locator(MultipleLocator(1))
     axes[0].set_title("Train loss per epoch")
     axes[0].set_xlabel("epoch")
     axes[0].set_ylabel("loss")
     axes[0].legend(fontsize=8)
 
+
+    axes[1].xaxis.set_major_locator(MultipleLocator(1))
     axes[1].set_title("Test accuracy per epoch")
     axes[1].set_xlabel("epoch")
     axes[1].set_ylabel("accuracy (%)")
