@@ -16,10 +16,8 @@ from analysis.aggregate import (
 )
 from analysis.plots import (
     plot_training_curves,
-    plot_robustness_fgsm,
-    plot_robustness_pgd,
-    plot_seed_variance_fgsm,
-    plot_seed_variance_pgd,
+    plot_robustness,
+    plot_seed_variance,
     plot_steps_scaling,
     plot_defense_robustness,
     plot_crosseval_heatmap,
@@ -44,6 +42,7 @@ def _save_fig(fig, name):
 def main():
     _setup_dirs()
     dfs = load_all()
+    
 
     train_df   = dfs["train"]
     attack_df  = dfs["attack"]
@@ -58,15 +57,13 @@ def main():
 
     # ── baseline robustness ──────────────────────────────────────
     print("\nBaseline robustness...")
-    _save_fig(plot_robustness_fgsm(attack_df), "robustness_fgsm.png")
-    _save_fig(plot_robustness_pgd(attack_df),  "robustness_pgd.png")
+    _save_fig(plot_robustness(attack_df), "robustness.png")
     attack_summary(attack_df).to_csv(CSV_DIR / "attack_summary.csv", index=False)
     best_accuracy(attack_df).to_csv(CSV_DIR / "best_accuracy.csv", index=False)
 
     # ── seed variance ────────────────────────────────────────────
     print("\nSeed variance...")
-    _save_fig(plot_seed_variance_fgsm(attack_df), "seed_variance_fgsm.png")
-    _save_fig(plot_seed_variance_pgd(attack_df),  "seed_variance_pgd.png")
+    _save_fig(plot_seed_variance(attack_df), "seed_variance.png")
     variance = seed_variance(attack_df)
     variance.to_csv(CSV_DIR / "seed_variance.csv", index=False)
     print(variance.to_string(index=False))
@@ -77,47 +74,44 @@ def main():
     step_complexity(attack_df).to_csv(CSV_DIR / "step_complexity.csv", index=False)
 
     # ── defense (skip if no data yet) ───────────────────────────
-    if defense_df.empty:
-        print("\nNo defense data yet, skipping defense plots.")
-    else:
-        print("\nDefense robustness...")
+    print("\nDefense robustness...")
+    _save_fig(
+        plot_defense_robustness(defense_df, eval_attack="fgsm"),
+        "defense_robustness_vs_fgsm.png"
+    )
+    _save_fig(
+        plot_defense_robustness(defense_df, eval_attack="pgd", eval_steps=40),
+        "defense_robustness_vs_pgd40.png"
+    )
+
+    print("Baseline vs defense comparison...")
+    _save_fig(
+        plot_defense_vs_baseline(defense_df, eval_attack="fgsm"),
+        "defense_vs_baseline_fgsm.png"
+    )
+    _save_fig(
+        plot_defense_vs_baseline(defense_df, eval_attack="pgd", eval_steps=40),
+        "defense_vs_baseline_pgd40.png"
+    )
+
+    print("Cross-evaluation heatmap...")
+    for eps in [0.1, 0.2, 0.3]:
         _save_fig(
-            plot_defense_robustness(defense_df, eval_attack="fgsm"),
-            "defense_robustness_vs_fgsm.png"
-        )
-        _save_fig(
-            plot_defense_robustness(defense_df, eval_attack="pgd", eval_steps=40),
-            "defense_robustness_vs_pgd40.png"
+            plot_crosseval_heatmap(defense_df, epsilon=eps),
+            f"crosseval_heatmap_eps{int(eps * 100):02d}.png"
         )
 
-        print("Baseline vs defense comparison...")
-        _save_fig(
-            plot_defense_vs_baseline(defense_df, eval_attack="fgsm"),
-            "defense_vs_baseline_fgsm.png"
-        )
-        _save_fig(
-            plot_defense_vs_baseline(defense_df, eval_attack="pgd", eval_steps=40),
-            "defense_vs_baseline_pgd40.png"
-        )
+    print("Defense summary tables...")
+    defense_summary(defense_df).to_csv(CSV_DIR / "defense_summary.csv", index=False)
+    defense_delta_summary(defense_df).to_csv(CSV_DIR / "defense_delta_summary.csv", index=False)
+    defense_seed_variance(defense_df).to_csv(CSV_DIR / "defense_seed_variance.csv", index=False)
 
-        print("Cross-evaluation heatmap...")
-        for eps in [0.1, 0.2, 0.3]:
-            _save_fig(
-                plot_crosseval_heatmap(defense_df, epsilon=eps),
-                f"crosseval_heatmap_eps{int(eps * 100):02d}.png"
-            )
-
-        print("Defense summary tables...")
-        defense_summary(defense_df).to_csv(CSV_DIR / "defense_summary.csv", index=False)
-        defense_delta_summary(defense_df).to_csv(CSV_DIR / "defense_delta_summary.csv", index=False)
-        defense_seed_variance(defense_df).to_csv(CSV_DIR / "defense_seed_variance.csv", index=False)
-
-        print("Cross-evaluation pivot tables...")
-        for eps in [0.1, 0.2, 0.3]:
-            pivot = crosseval_pivot(defense_df, epsilon=eps)
-            pivot.to_csv(CSV_DIR / f"crosseval_pivot_eps{int(eps * 100):02d}.csv")
-            print(f"\n  Cross-eval at ε={eps:.1f}:")
-            print(pivot.to_string())
+    print("Cross-evaluation pivot tables...")
+    for eps in [0.1, 0.2, 0.3]:
+        pivot = crosseval_pivot(defense_df, epsilon=eps)
+        pivot.to_csv(CSV_DIR / f"crosseval_pivot_eps{int(eps * 100):02d}.csv")
+        print(f"\n  Cross-eval at ε={eps:.1f}:")
+        print(pivot.to_string())
 
     print(f"\nDone. Outputs in {ARTIFACTS_DIR}/")
 
