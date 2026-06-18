@@ -44,6 +44,7 @@ def main():
             task="attack_eval",
             model="cnn_mnist",
             attack=args.attack,
+            steps=attack_params.get("steps"),
             epsilon=epsilon,
             seed=args.seed,
         )

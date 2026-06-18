@@ -17,6 +17,10 @@ def make_run_id(task: str, model: str, **metadata) -> str:
             if value:
                 parts.append(key)
 
+        elif key == "steps":
+            if value is not None:
+                parts.append(f"steps{value}")
+                
         else:
             parts.append(f"{key}{value}")
 

@@ -9,7 +9,7 @@ parser.add_argument("--dry-run", action="store_true")
 args = parser.parse_args()
 
 if args.dry_run:
-    from src.utils.config import NUM_SEEDS_DRY as NUM_SEEDS, DEFENSES_DRY as DEFENSES
+    from src.utils.config import NUM_SEEDS_DRY as NUM_SEEDS, ATTACKS_DRY as ATTACKS 
 else:
     from src.utils.config import NUM_SEEDS, ATTACKS as ATTACKS
 
