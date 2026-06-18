@@ -49,7 +49,7 @@ def get_mnist_test_loader(batch_size=64):
     test_dataset = datasets.MNIST(
         root=DATA_PATH,
         train=False,
-        download=False,
+        download=True,
         transform=transform
     )
 
