@@ -5,34 +5,9 @@ import time
 import torch
 
 from src.evaluation.core import evaluate
+from src.training.core import train_epoch
 from src.utils.config import load_experiment
 from src.utils.context import RunContext, build_train_ctx
-
-
-def train_epoch(ctx: RunContext):
-    ctx.model.train()
-
-    loader = ctx.loaders["train"]
-    total_loss = 0
-    correct = 0
-
-    for images, labels in loader:
-        images, labels = images.to(ctx.device), labels.to(ctx.device)
-
-        ctx.optimizer.zero_grad()
-        outputs = ctx.model(images)
-        loss = ctx.criterion(outputs, labels)
-
-        loss.backward()
-        ctx.optimizer.step()
-
-        total_loss += loss.item()
-        correct += (outputs.argmax(dim=1) == labels).sum().item()
-
-    return (
-        total_loss / len(loader),
-        100.0 * correct / len(loader.dataset)
-    )
 
 
 def train(ctx: RunContext):
@@ -42,8 +17,6 @@ def train(ctx: RunContext):
 
     print(f"[TRAIN] {ctx.training_cfg.method}, seed={ctx.seed}")
     
-    start_epoch = 0
-
     for epoch in range(ctx.epoch, ctx.training_cfg.epochs):
         start = time.perf_counter()
 
