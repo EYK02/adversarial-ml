@@ -78,7 +78,7 @@ def eval_robustness(
         f"base={base_acc:.2f}% | "
         f"defense={defense_acc:.2f}% | "
         f"delta={defense_acc - base_acc:+.2f}% | "
-        f"{duration:.1f}s"
+        f"duration={duration:.1f}s"
     )
 
     logger.log({

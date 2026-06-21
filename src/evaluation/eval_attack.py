@@ -60,7 +60,7 @@ def eval_attack(
     print(
         f"  eps={epsilon:.2f} | "
         f"acc={acc:.2f}% | "
-        f"{duration:.1f}s"
+        f"duration={duration:.1f}s"
     )
 
     logger.log({

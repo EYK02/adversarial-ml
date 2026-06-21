@@ -90,7 +90,7 @@ def train(cfg: ExperimentConfig, training_cfg: TrainingConfig, seed: int):
             f"loss={train_loss:.4f} | "
             f"train={train_acc:.1f}% | "
             f"test={test_acc:.1f}% | "
-            f"{duration:.1f}s"
+            f"duration={duration:.1f}s"
         )
 
         logger.log({
