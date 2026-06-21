@@ -113,7 +113,7 @@ def main():
                         help="Run a single stage only (1-5)")
     args = parser.parse_args()
 
-    cfg    = load_experiment(args.experiment, dry_run=args.dry_run)
+    cfg    = load_experiment(args.config, dry_run=args.dry_run)
     stages = build_experiments(cfg, dry_run=args.dry_run)
 
     # create run directories
@@ -131,6 +131,23 @@ def main():
         shutil.copy2(cfg.experiment_path, snapshot_path)
 
     runner = ExperimentRunner()
+
+    # count total jobs for ETA
+    all_jobs = [
+        exp
+        for i, (_, experiments) in enumerate(stages, start=1)
+        if args.stage is None or args.stage == i
+        for exp in experiments
+    ]
+    runner.set_total(len(all_jobs))
+
+    print(f"\n{'═' * 60}")
+    print(f"  Run : {cfg.run_name}")
+    print(f"  Config : {cfg.experiment_path}")
+    print(f"  Dry run : {cfg.dry_run}")
+    print(f"  Seeds : {cfg.seeds}")
+    print(f"  Jobs : {len(all_jobs)}")
+    print(f"{'═' * 60}")
 
     for i, (stage_name, experiments) in enumerate(stages, start=1):
         if args.stage is not None and args.stage != i:
