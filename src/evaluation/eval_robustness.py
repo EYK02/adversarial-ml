@@ -49,6 +49,7 @@ def eval_robustness(
         eval_cfg.name,
         steps=eval_steps,
         alpha=eval_alpha,
+        restarts=eval_cfg.restarts
     )
 
     run_id = make_run_id(

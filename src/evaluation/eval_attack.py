@@ -32,7 +32,12 @@ def eval_attack(
     if alpha is None and steps is not None:
         alpha = 2.5 * epsilon / steps
 
-    attack_fn, attack_params = get_attack_fn(attack_cfg.name, steps=steps, alpha=alpha)
+    attack_fn, attack_params = get_attack_fn(
+        attack_cfg.name, 
+        steps=steps, 
+        alpha=alpha,
+        restarts=attack_cfg.restarts
+    )
 
     run_id = make_run_id(
         task    = "attack_eval",

@@ -2,3 +2,4 @@
 name: pgd
 steps: 5
 alpha: budget_scaled   # triggers 2.5*eps/steps in registry
+restarts: 5

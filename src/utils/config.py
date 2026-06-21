@@ -31,9 +31,10 @@ class ModelConfig:
 
 @dataclass
 class AttackConfig:
-    name:   str
-    steps:  Optional[int]   = None
-    alpha:  Optional[float] = None  # None = budget_scaled
+    name:       str
+    steps:      Optional[int]   = None
+    alpha:      Optional[float] = None  # None = budget_scaled
+    restarts:   int             = 1
 
 
 @dataclass
@@ -112,9 +113,10 @@ def _load_model(path_str: str, root: Path) -> ModelConfig:
 def _load_attack(path_str: str, root: Path) -> AttackConfig:
     d = _load_yaml(_resolve(path_str, root))
     return AttackConfig(
-        name  = d["name"],
-        steps = d.get("steps"),
-        alpha = None if d.get("alpha") == "budget_scaled" else d.get("alpha"),
+        name        = d["name"],
+        steps       = d.get("steps"),
+        alpha       = None if d.get("alpha") == "budget_scaled" else d.get("alpha"),
+        restarts    = d.get("restarts", 1)
     )
 
 
