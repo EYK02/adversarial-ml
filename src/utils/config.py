@@ -56,6 +56,8 @@ class ExperimentConfig:
     epsilon_eval:     list[float]
     epsilon_heatmap:  list[float]
     run_name:         str
+    experiment_path:  str         
+
     dry_run:          bool = False
 
     # resolved at load time
@@ -80,13 +82,13 @@ def _load_yaml(path: Path) -> dict:
         return yaml.safe_load(f)
 
 
-def _resolve(path_str: str, base: Path) -> Path:
+def _resolve(path_str: str, root: Path) -> Path:
     """Resolve a path relative to the config root."""
-    return (base / path_str).resolve()
+    return (root / path_str).resolve()
 
 
-def _load_dataset(path_str: str, base: Path) -> DatasetConfig:
-    d = _load_yaml(_resolve(path_str, base))
+def _load_dataset(path_str: str, root: Path) -> DatasetConfig:
+    d = _load_yaml(_resolve(path_str, root))
     return DatasetConfig(
         name           = d["name"],
         num_classes    = d["num_classes"],
@@ -98,8 +100,8 @@ def _load_dataset(path_str: str, base: Path) -> DatasetConfig:
     )
 
 
-def _load_model(path_str: str, base: Path) -> ModelConfig:
-    d = _load_yaml(_resolve(path_str, base))
+def _load_model(path_str: str, root: Path) -> ModelConfig:
+    d = _load_yaml(_resolve(path_str, root))
     return ModelConfig(
         name           = d["name"],
         num_classes    = d["num_classes"],
@@ -107,8 +109,8 @@ def _load_model(path_str: str, base: Path) -> ModelConfig:
     )
 
 
-def _load_attack(path_str: str, base: Path) -> AttackConfig:
-    d = _load_yaml(_resolve(path_str, base))
+def _load_attack(path_str: str, root: Path) -> AttackConfig:
+    d = _load_yaml(_resolve(path_str, root))
     return AttackConfig(
         name  = d["name"],
         steps = d.get("steps"),
@@ -116,11 +118,11 @@ def _load_attack(path_str: str, base: Path) -> AttackConfig:
     )
 
 
-def _load_training(path_str: str, base: Path) -> TrainingConfig:
-    d = _load_yaml(_resolve(path_str, base))
+def _load_training(path_str: str, root: Path) -> TrainingConfig:
+    d = _load_yaml(_resolve(path_str, root))
     attack = None
     if "attack" in d:
-        attack = _load_attack(d["attack"], base)
+        attack = _load_attack(d["attack"], root)
     return TrainingConfig(
         method        = d["method"],
         epochs        = d["epochs"],
@@ -154,7 +156,7 @@ def _resolve_run_name(exp_path: Path, dry_run: bool) -> str:
 
 def load_experiment(path: str | Path, dry_run: bool = False) -> ExperimentConfig:
     path = Path(path).resolve()
-    base = path.parent.parent  # configs/ root — one level above experiments/
+    root = path.parent.parent.parent  # configs/ root — one level above experiments/
     raw  = _load_yaml(path)
 
     # apply dry_run overrides if present
@@ -163,22 +165,23 @@ def load_experiment(path: str | Path, dry_run: bool = False) -> ExperimentConfig
         for key, val in overrides.items():
             raw[key] = val
 
-    training = [_load_training(t, base) for t in raw["training"]]
-    eval_attacks = [_load_attack(a, base) for a in raw["eval_attacks"]]
+    training = [_load_training(t, root) for t in raw["training"]]
+    eval_attacks = [_load_attack(a, root) for a in raw["eval_attacks"]]
 
     run_name = _resolve_run_name(path, dry_run)
     run_dir  = Path("runs") / run_name
     paths    = _make_paths(run_dir)
 
     cfg = ExperimentConfig(
-        dataset         = _load_dataset(raw["dataset"], base),
-        model           = _load_model(raw["model"], base),
+        dataset         = _load_dataset(raw["dataset"], root),
+        model           = _load_model(raw["model"], root),
         training        = training,
         eval_attacks    = eval_attacks,
         seeds           = raw["seeds"],
         epsilon_eval    = raw["epsilon_eval"],
         epsilon_heatmap = raw["epsilon_heatmap"],
         run_name        = run_name,
+        experiment_path = str(path),
         dry_run         = dry_run,
         paths           = paths,
     )

@@ -1,0 +1,8 @@
+# configs/datasets/mnist.yaml
+name: mnist
+num_classes: 10
+input_channels: 1
+image_size: 28
+data_path: data/
+mean: [0.1307]
+std: [0.3081]

@@ -1,14 +1,11 @@
-# analysis/load_logs.py
+# src/analysis/load_logs.py
 
 import json
 from pathlib import Path
 
-import pandas as pd 
+import pandas as pd
 
 from src.utils.schema import normalize
-
-ARTIFACTS_DIR = Path("artifacts")
-JSONL_DIR     = ARTIFACTS_DIR / "jsonl"
 
 PARAM_COLS = ["attack_params", "defense_params", "eval_params"]
 
@@ -47,24 +44,22 @@ def load_jsonl(path: Path) -> pd.DataFrame:
     return df
 
 
-def load_all() -> dict[str, pd.DataFrame]:
+def load_all(logs_dir: Path) -> dict[str, pd.DataFrame]:
     """
-    Loads all experiment logs and returns:
-    - raw views (for debugging)
-    - normalized views (for analysis)
+    Loads all experiment logs from logs_dir and returns
+    normalized DataFrames keyed by log type.
     """
-    dfs = {}
-
     sources = {
-        "train":     JSONL_DIR / "training.jsonl",
-        "attack":    JSONL_DIR / "attack_eval.jsonl",
-        "adv_train": JSONL_DIR / "adv_training.jsonl",
-        "defense":   JSONL_DIR / "defense_eval.jsonl",
+        "train":     logs_dir / "standard.jsonl",
+        "attack":    logs_dir / "attack_eval.jsonl",
+        "adv_train": logs_dir / "adv_training.jsonl",
+        "defense":   logs_dir / "defense_eval.jsonl",
     }
 
+    dfs = {}
     for key, path in sources.items():
-        raw = load_jsonl(path)
+        raw            = load_jsonl(path)
         dfs[f"{key}_raw"] = raw
-        dfs[key] = normalize(raw) if not raw.empty else pd.DataFrame()
+        dfs[key]       = normalize(raw) if not raw.empty else pd.DataFrame()
 
     return dfs

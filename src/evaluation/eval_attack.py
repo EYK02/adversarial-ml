@@ -2,83 +2,99 @@
 
 import argparse
 import time
-from attacks.registry import get_attack_fn
-from datasets.loader import get_mnist_test_loader
-from evaluation.core import evaluate
-from utils.logger import JSONLLogger
-from utils.run_id import make_run_id
-from models.factory import load_model
-from old.src.utils.config import BATCH_SIZE
-from utils.seed import set_seed, get_device
 
-logger = JSONLLogger("artifacts/jsonl/attack_eval.jsonl")
+from src.attacks.registry import get_attack_fn
+from src.datasets.mnist import get_test_loader
+from src.evaluation.core import evaluate
+from src.models.factory import load_model
+from src.utils.config import load_experiment, ExperimentConfig, AttackConfig
+from src.utils.logger import JSONLLogger
+from src.utils.run_id import make_run_id
+from src.utils.seed import set_seed, get_device
+
+
+def eval_attack(
+        cfg:        ExperimentConfig,
+        attack_cfg: AttackConfig,
+        seed:       int,
+        epsilon:    float,
+        logger:     JSONLLogger,
+) -> None:
+    device      = get_device()
+    test_loader = get_test_loader(cfg.dataset, batch_size=64)
+
+    checkpoint_path = cfg.paths.checkpoints / f"standard_seed{seed}.pth"
+    model           = load_model(str(checkpoint_path), device, cfg.model)
+
+    # resolve alpha
+    steps = attack_cfg.steps
+    alpha = attack_cfg.alpha
+    if alpha is None and steps is not None:
+        alpha = 2.5 * epsilon / steps
+
+    attack_fn, attack_params = get_attack_fn(attack_cfg.name, steps=steps, alpha=alpha)
+
+    run_id = make_run_id(
+        task    = "attack_eval",
+        model   = cfg.model.name,
+        dataset = cfg.dataset.name,
+        attack  = attack_cfg.name,
+        steps   = steps,
+        epsilon = epsilon,
+        seed    = seed,
+    )
+
+    if logger.contains(run_id):
+        print(f"  Skipping {run_id} — already logged")
+        return
+
+    start = time.perf_counter()
+    acc   = evaluate(model, device, test_loader, attack_fn, epsilon)
+    duration = time.perf_counter() - start
+
+    print(f"  eps={epsilon:.2f}  acc={acc:.2f}%  ({duration:.1f}s)")
+
+    logger.log({
+        "run_id":        run_id,
+        "run_type":      "attack_eval",
+        "model":         cfg.model.name,
+        "model_path":    str(checkpoint_path),
+        "dataset":       cfg.dataset.name,
+        "seed":          seed,
+        "attack":        attack_cfg.name,
+        "attack_params": attack_params,
+        "epsilon":       float(epsilon),
+        "accuracy":      float(acc),
+        "duration_sec":  float(duration),
+    })
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate adversarial attack on MNIST")
-    parser.add_argument("--attack", type=str,   default="fgsm", help="Attack to evaluate")
-    parser.add_argument("--steps",  type=int,   default=None,   help="PGD step count (PGD only)")
-    parser.add_argument("--seed",   type=int,   default=0,      help="Random seed")
-    parser.add_argument("--dry-run", action="store_true")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--experiment", type=str, required=True)
+    parser.add_argument("--attack",     type=str, required=True,
+                        help="Attack name, e.g. fgsm or pgd10")
+    parser.add_argument("--seed",       type=int, required=True)
+    parser.add_argument("--dry-run",    action="store_true")
     args = parser.parse_args()
 
-    if args.dry_run:
-        from old.src.utils.config import EPSILONS_DRY as EPSILONS, DEFENSES_DRY as DEFENSES, EVAL_ATTACKS_DRY as EVAL_ATTACKS
-    else:
-        from old.src.utils.config import EPSILONS as EPSILONS, DEFENSES as DEFENSES, EVAL_ATTACKS as EVAL_ATTACKS
+    cfg = load_experiment(args.experiment, dry_run=args.dry_run)
+
+    attack_cfg = next(
+        a for a in cfg.eval_attacks
+        if (a.name == args.attack)
+        or (a.steps is not None and f"{a.name}{a.steps}" == args.attack)
+    )
+
+    log_path = cfg.paths.logs / "attack_eval.jsonl"
+    cfg.paths.logs.mkdir(parents=True, exist_ok=True)
+    logger = JSONLLogger(str(log_path))
 
     set_seed(args.seed)
-    device  = get_device()
-    test_loader = get_mnist_test_loader(BATCH_SIZE)
+    print(f"Attack eval — {args.attack}, seed={args.seed}")
 
-    # baseline model
-    base_model_path = f"models/cnn_mnist_seed{args.seed}.pth"
-    base_model   = load_model(base_model_path, device)
-
-    attack_fn, attack_params = get_attack_fn(args.attack, steps=args.steps)
-
-    print(f"Attack eval — attack={args.attack}, params={attack_params}, seed={args.seed}\n")
-
-    for epsilon in EPSILONS:
-        # Generate run_id
-        run_id = make_run_id(
-            task="attack_eval",
-            model="cnn_mnist",
-            attack=args.attack,
-            steps=attack_params.get("steps"),
-            epsilon=epsilon,
-            seed=args.seed,
-        )
-
-        # Skip if evaluation already exists
-        if logger.contains(run_id):
-            print(f'   Skipping eps={epsilon:.2f} (already completed)')
-            continue
-
-        # Evaluate (timed)
-        start = time.perf_counter()
-
-        acc = evaluate(base_model, device, test_loader, attack_fn, epsilon)
-
-        duration = time.perf_counter() - start
-
-        print(f"  eps={epsilon:.2f}  acc={acc:.2f}%  ({duration:.1f}s)")
-
-        # Log evaluation
-        logger.log({
-            "run_id":        run_id,
-            "run_type":      "attack_eval",
-            "model":         "cnn_mnist",
-            "model_path":    base_model_path,
-            "dataset":       "mnist",
-            "seed":          args.seed,
-
-            "attack":        args.attack,
-            "attack_params": attack_params,
-            "epsilon":       float(epsilon),
-
-            "accuracy":      float(acc),
-            "duration_sec":  float(duration),
-        })
+    for epsilon in cfg.epsilon_eval:
+        eval_attack(cfg, attack_cfg, args.seed, epsilon, logger)
 
 
 if __name__ == "__main__":

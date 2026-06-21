@@ -1,4 +1,0 @@
-# configs/attacks/fgsm.yaml
-name: fgsm
-steps: null
-alpha: null

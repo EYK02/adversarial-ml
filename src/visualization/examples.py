@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from attacks.registry import get_attack_fn
 from models.factory import load_model
-from datasets.loader import get_mnist_test_loader
+from src.datasets.mnist import get_mnist_test_loader
 from utils.seed import set_seed
 from old.src.utils.config import EPSILONS
 
