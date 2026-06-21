@@ -3,13 +3,9 @@
 import argparse
 import time
 
-from src.attacks.registry import build_attack
-from src.datasets.mnist import get_test_loader
 from src.evaluation.core import evaluate
-from src.models.factory import load_model
 from src.utils.config import load_experiment
 from src.utils.context import build_eval_attack_ctx, RunContext
-from src.utils.logger import JSONLLogger
 from src.utils.seed import set_seed
 
 
@@ -20,11 +16,7 @@ def eval_attack(ctx: RunContext) -> None:
 
     start = time.perf_counter()
 
-    acc = evaluate(
-        ctx=ctx,
-        split="test",
-        epsilon=ctx.epsilon,
-    )
+    acc = evaluate(ctx)
 
     duration = time.perf_counter() - start
 

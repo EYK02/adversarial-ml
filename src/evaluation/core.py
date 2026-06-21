@@ -1,26 +1,24 @@
 import torch
 
-def evaluate(
-    ctx,
-    attack_fn=None,
-    split: str = "test",
-    epsilon=None,
-):
+def evaluate(ctx):
     ctx.model.eval()
 
-    loader = ctx.loaders[split]
+    loader = ctx.loaders["test"]
 
     total_loss = 0.0
     correct = 0
     total = 0
 
+    attack_fn = getattr(ctx, "attack_fn", None)
+    epsilon = getattr(ctx, "epsilon", None)
+
     use_loss = ctx.criterion is not None
-    use_attack = attack_fn is not None
 
     for x, y in loader:
-        x, y = x.to(ctx.device), y.to(ctx.device)
+        x = x.to(ctx.device)
+        y = y.to(ctx.device)
 
-        if use_attack:
+        if attack_fn is not None:
             x = attack_fn(
                 ctx.model,
                 ctx.device,
@@ -33,12 +31,12 @@ def evaluate(
             out = ctx.model(x)
 
             if use_loss:
-                loss        = ctx.criterion(out, y)
+                loss = ctx.criterion(out, y)
                 total_loss += loss.item()
 
-            pred        = out.argmax(dim=1)
-            correct    += (pred == y).sum().item()
-            total      += y.size(0)
+            preds = out.argmax(dim=1)
+            correct += (preds == y).sum().item()
+            total += y.size(0)
 
     acc = 100.0 * correct / total
 
