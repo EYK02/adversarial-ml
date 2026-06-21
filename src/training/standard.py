@@ -2,7 +2,6 @@
 
 import argparse
 import time
-
 import torch
 
 from src.evaluation.core import evaluate
