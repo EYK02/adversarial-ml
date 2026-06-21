@@ -111,24 +111,20 @@ def defense_seed_variance(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def crosseval_pivot(df: pd.DataFrame, epsilon: float) -> pd.DataFrame:
-    """
-    At a fixed epsilon, pivot table of mean defense_accuracy:
-    rows = defense config, cols = eval attack.
-    Useful for quick cross-evaluation inspection in the console.
-    """
     d = df[df["epsilon"].round(4) == round(epsilon, 4)].copy()
 
-    def defense_label(attack, steps):
-        return attack.upper() if pd.isna(steps) else f"PGD-{int(steps)}"
-
-    def eval_label(attack, steps):
-        return attack.upper() if pd.isna(steps) else f"PGD-{int(steps)}"
+    def attack_label(attack, steps):
+        if pd.isna(steps):
+            return attack.upper()
+        return f"PGD-{int(steps)}"
 
     d["defense_label"] = d.apply(
-        lambda r: defense_label(r["defense_attack"], r["defense_steps"]), axis=1
+        lambda r: attack_label(r["defense_attack"], r["defense_steps"]),
+        axis=1,
     )
     d["eval_label"] = d.apply(
-        lambda r: eval_label(r["eval_attack"], r["eval_steps"]), axis=1
+        lambda r: attack_label(r["eval_attack"], r["eval_steps"]),
+        axis=1,
     )
 
     baseline = (
@@ -136,18 +132,28 @@ def crosseval_pivot(df: pd.DataFrame, epsilon: float) -> pd.DataFrame:
          .mean()
     )
     baseline_row = pd.DataFrame([baseline], index=["Undefended"])
-    
+
     pivot = (
         d.groupby(["defense_label", "eval_label"])["defense_accuracy"]
          .mean()
          .unstack()
     )
+
     pivot = pd.concat([baseline_row, pivot])
 
-    row_order = ["Undefended", "FGSM"] + [f"PGD-{s}" for s in [5, 10, 20, 40]]
-    col_order = ["FGSM", "PGD-40"]
-    pivot = pivot.reindex(
-        index=[r for r in row_order if r in pivot.index],
-        columns=[c for c in col_order if c in pivot.columns]
+    # Dynamic ordering
+    def sort_key(label):
+        if label == "FGSM":
+            return (0, 0)
+        if label.startswith("PGD-"):
+            return (1, int(label.split("-")[1]))
+        return (2, label)
+
+    row_order = ["Undefended"] + sorted(
+        [x for x in pivot.index if x != "Undefended"],
+        key=sort_key,
     )
-    return pivot
+
+    col_order = sorted(pivot.columns, key=sort_key)
+
+    return pivot.reindex(index=row_order, columns=col_order)
