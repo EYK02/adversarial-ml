@@ -160,9 +160,10 @@ def _resolve_run_name(exp_path: Path, dry_run: bool, smoke_test: bool) -> str:
 # ─────────────────────────────────────────
 
 def load_experiment(
-        path: str | Path, 
-        dry_run: bool = False,
-        smoke_test: bool = False
+        path:       str | Path, 
+        dry_run:    bool = False,
+        smoke_test: bool = False,
+        run_name:   str = None,
     ) -> ExperimentConfig:
     
     path = Path(path).resolve()
@@ -178,14 +179,16 @@ def load_experiment(
         for key, val in overrides.items():
             raw[key] = val
 
+    
+
     training = [_load_training(t, root) for t in raw["training"]]
     eval_attacks = [_load_attack(a, root) for a in raw["eval_attacks"]]
 
     dataset         = _load_dataset(raw["dataset"], root)
     model           = _load_model(raw["model"], root)
 
-    run_name = _resolve_run_name(path, dry_run, smoke_test)
-    run_dir  = Path("runs") / run_name
+    resolved_run_name = run_name if run_name else _resolve_run_name(path, dry_run, smoke_test)
+    run_dir  = Path("runs") / resolved_run_name
     paths    = _make_paths(run_dir, dataset.name, model.name)
 
     cfg = ExperimentConfig(

@@ -53,7 +53,7 @@ def eval_robustness(
     )
 
     run_id = make_run_id(
-        task          = "defense_eval",
+        task          = "eval_robustness",
         model         = cfg.model.name,
         dataset       = cfg.dataset.name,
         defense       = training_cfg.attack.name,
@@ -65,7 +65,7 @@ def eval_robustness(
     )
 
     if logger.contains(run_id):
-        print(f"  Skipping {run_id} — already logged")
+        print(f"  [SKIP] {run_id} already completed.")
         return
 
     start        = time.perf_counter()
@@ -83,7 +83,7 @@ def eval_robustness(
 
     logger.log({
         "run_id":            run_id,
-        "run_type":          "defense_eval",
+        "run_type":          "eval_robustness",
         "model":             cfg.model.name,
         "dataset":           cfg.dataset.name,
         "seed":              seed,
@@ -115,22 +115,26 @@ def main():
     parser.add_argument("--seed",            type=int, required=True)
     parser.add_argument("--dry-run",         action="store_true")
     parser.add_argument("--smoke-test",    action="store_true")
+    parser.add_argument("--run-name", type=str, default=None)
     args = parser.parse_args()
 
-    cfg = load_experiment(args.experiment, dry_run=args.dry_run, smoke_test=args.smoke_test)
-
+    cfg = load_experiment(
+        args.experiment, 
+        dry_run=args.dry_run, 
+        smoke_test=args.smoke_test,
+        run_name=args.run_name
+    )
     training_cfg = next(
         t for t in cfg.training
         if t.method == "adversarial" and _attack_tag(t) == args.training_config
     )
-
     eval_cfg = next(
         a for a in cfg.eval_attacks
         if (a.name == args.eval_attack)
         or (a.steps is not None and f"{a.name}{a.steps}" == args.eval_attack)
     )
 
-    log_path = cfg.paths.logs / "defense_eval.jsonl"
+    log_path = cfg.paths.logs / "eval_robustness.jsonl"
     cfg.paths.logs.mkdir(parents=True, exist_ok=True)
     logger = JSONLLogger(str(log_path))
 

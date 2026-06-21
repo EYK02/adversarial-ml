@@ -40,7 +40,7 @@ def eval_attack(
     )
 
     run_id = make_run_id(
-        task    = "attack_eval",
+        task    = "eval_attack",
         model   = cfg.model.name,
         dataset = cfg.dataset.name,
         attack  = attack_cfg.name,
@@ -50,7 +50,7 @@ def eval_attack(
     )
 
     if logger.contains(run_id):
-        print(f"  Skipping {run_id} — already logged")
+        print(f"  [SKIP] {run_id} already completed.")
         return
 
     start = time.perf_counter()
@@ -65,7 +65,7 @@ def eval_attack(
 
     logger.log({
         "run_id":        run_id,
-        "run_type":      "attack_eval",
+        "run_type":      "eval_attack",
         "model":         cfg.model.name,
         "model_path":    str(checkpoint_path),
         "dataset":       cfg.dataset.name,
@@ -86,17 +86,22 @@ def main():
     parser.add_argument("--seed",       type=int, required=True)
     parser.add_argument("--dry-run",    action="store_true")
     parser.add_argument("--smoke-test",    action="store_true")
+    parser.add_argument("--run-name", type=str, default=None)
     args = parser.parse_args()
 
-    cfg = load_experiment(args.experiment, dry_run=args.dry_run, smoke_test=args.smoke_test)
-
+    cfg = load_experiment(
+        args.experiment, 
+        dry_run=args.dry_run, 
+        smoke_test=args.smoke_test,
+        run_name=args.run_name
+    )
     attack_cfg = next(
         a for a in cfg.eval_attacks
         if (a.name == args.attack)
         or (a.steps is not None and f"{a.name}{a.steps}" == args.attack)
     )
 
-    log_path = cfg.paths.logs / "attack_eval.jsonl"
+    log_path = cfg.paths.logs / "eval_attack.jsonl"
     cfg.paths.logs.mkdir(parents=True, exist_ok=True)
     logger = JSONLLogger(str(log_path))
 

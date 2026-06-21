@@ -5,7 +5,7 @@ import pandas as pd
 from dataclasses import dataclass, asdict
 from typing import Any, Optional, Literal
 
-RunType = Literal["training", "attack_eval", "adv_training", "defense_eval"]
+RunType = Literal["training", "eval_attack", "adv_training", "eval_robustness"]
 
 
 # Dataclasses
@@ -94,7 +94,7 @@ def _normalize_training(row: dict[str, Any]) -> dict[str, Any]:
     ))
 
 
-def _normalize_attack_eval(row: dict[str, Any]) -> dict[str, Any]:
+def _normalize_eval_attack(row: dict[str, Any]) -> dict[str, Any]:
     raw_params = row.get("attack_params")
     params = raw_params if isinstance(raw_params, dict) else {}
 
@@ -135,7 +135,7 @@ def _normalize_adv_training(row: dict[str, Any]) -> dict[str, Any]:
     ))
 
 
-def _normalize_defense_eval(row: dict[str, Any]) -> dict[str, Any]:
+def _normalize_eval_robustness(row: dict[str, Any]) -> dict[str, Any]:
     defense_params = row.get("defense_params") or {}
     eval_params    = row.get("eval_params")    or {}
 
@@ -162,9 +162,9 @@ def _normalize_defense_eval(row: dict[str, Any]) -> dict[str, Any]:
 
 _NORMALIZERS = {
     "training":    _normalize_training,
-    "attack_eval": _normalize_attack_eval,
+    "eval_attack": _normalize_eval_attack,
     "adv_training": _normalize_adv_training,
-    "defense_eval": _normalize_defense_eval,
+    "eval_robustness": _normalize_eval_robustness
 }
 
 

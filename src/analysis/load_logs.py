@@ -51,9 +51,9 @@ def load_all(logs_dir: Path) -> dict[str, pd.DataFrame]:
     """
     sources = {
         "train":     logs_dir / "standard.jsonl",
-        "attack":    logs_dir / "attack_eval.jsonl",
+        "attack":    logs_dir / "eval_attack.jsonl",
         "adv_train": logs_dir / "adv_training.jsonl",
-        "defense":   logs_dir / "defense_eval.jsonl",
+        "defense":   logs_dir / "eval_robustness.jsonl",
     }
 
     dfs = {}

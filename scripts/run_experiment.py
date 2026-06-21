@@ -18,16 +18,21 @@ def _attack_tag(training_cfg: TrainingConfig) -> str:
 
 
 def build_experiments(
-        cfg: ExperimentConfig, 
-        dry_run: bool, 
-        smoke_test: bool
+        cfg:        ExperimentConfig, 
+        dry_run:    bool, 
+        smoke_test: bool,
+        run_name:   str,
     ) -> list[tuple[str, list[Experiment]]]:
     """
     Returns an ordered list of (stage_name, [Experiment, ...]) tuples.
     Each stage is run sequentially; experiments within a stage are
     run sequentially by the runner.
     """
-    mode_flag  = ["--dry-run"] if dry_run else ["--smoke-test"] if smoke_test else ""
+    dry_flag   = ["--dry-run"]    if dry_run    else []
+    smoke_flag = ["--smoke-test"] if smoke_test else []
+    name_flag  = ["--run-name", run_name] if run_name else []
+    mode_flag = dry_flag + smoke_flag + name_flag
+
     exp_flag = ["--experiment", cfg.experiment_path]
     py        = sys.executable
 
@@ -77,10 +82,10 @@ def build_experiments(
     ]
     stages.append(("STAGE 3 — Adversarial training", stage3))
 
-    # ── Stage 4: Defense evaluation ───────────────────────────────
+    # ── Stage 4: Robustness evaluation ───────────────────────────────
     stage4 = [
         Experiment(
-            f"defense eval def={_attack_tag(t)} eval={a.name}{a.steps or ''} seed={seed}",
+            f"robustness eval def={_attack_tag(t)} eval={a.name}{a.steps or ''} seed={seed}",
             [py, "-m", "src.evaluation.eval_robustness",
              "--experiment",      exp_flag[1],
              "--training-config", _attack_tag(t),
@@ -93,7 +98,7 @@ def build_experiments(
         for a in cfg.eval_attacks
         for seed in cfg.seeds
     ]
-    stages.append(("STAGE 4 — Defense evaluation", stage4))
+    stages.append(("STAGE 4 — Robustness evaluation", stage4))
 
     # ── Stage 5: Analysis report ──────────────────────────────────
     stage5 = [
@@ -117,12 +122,24 @@ def main():
     parser.add_argument("--smoke-test",    action="store_true")
     parser.add_argument("--stage",      type=int, default=None,
                         help="Run a single stage only (1-5)")
+    parser.add_argument("--run-name", type=str, default=None,
+                        help="Override run name for resuming previous run, e.g. 20226-06-21_mnist_cross_eval")
     args = parser.parse_args()
 
     start_time = time.perf_counter()
 
-    cfg    = load_experiment(args.config, dry_run=args.dry_run, smoke_test=args.smoke_test)
-    stages = build_experiments(cfg, dry_run=args.dry_run, smoke_test=args.smoke_test)
+    cfg    = load_experiment(
+        args.config, 
+        dry_run=args.dry_run, 
+        smoke_test=args.smoke_test, 
+        run_name=args.run_name
+    )
+    stages = build_experiments(
+        cfg, 
+        dry_run=args.dry_run, 
+        smoke_test=args.smoke_test,
+        run_name=args.run_name
+    )
 
     # create run directories
     for p in [
