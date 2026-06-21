@@ -82,36 +82,58 @@ adversarial-ml/
 ## Running Experiments
 
 ### Environment Setup
-# 1. Clone the repo
+#### 1. Clone the repo
 ```bash
 git clone https://github.com/EYK02/adversarial-ml.git
 cd adversarial-ml
 ```
-# 2. Create and activate venv
+#### 2. Create and activate venv
 ```bash
 python -m venv venv
 source venv/bin/activate        # Linux/Mac
 venv\Scripts\activate           # Windows
 ```
-# 3. Install dependencies
+#### 3. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
-# 4. Smoke test to verify pipeline
+
+#### 4. (Optional) AMD GPU support via ROCm — Linux only
+Check your ROCm version, then replace the CPU-only PyTorch from requirements.txt with the matching ROCm wheel:
+
+```bash
+bashrocm-smi --version   # e.g. "6.2.0"
+
+pip uninstall torch torchvision -y
+pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.2
+```
+
+Replace rocm6.2 with your installed version. Available builds are listed at pytorch.org/get-started/locally.
+Verify the GPU is visible before proceeding:
+
+```bash
+bashpython -c "import torch; print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0))"
+```
+
+Expected output example:
+True
+AMD Radeon RX 7800 XT
+
+#### 5. Smoke test to verify pipeline
 ```bash
 python -m scripts.run_experiment \
     --config configs/experiments/mnist_cross_eval.yaml \
     --smoke-test
 ```
 
-# 5. Dry run to verify full config
+#### 6. Dry run to verify full config
 ```bash
 python -m scripts.run_experiment \
     --config configs/experiments/mnist_cross_eval.yaml \
     --dry-run
 ```
 
-# 6. Full run
+#### 7. Full run
 ```bash
 python -m scripts.run_experiment \
     --config configs/experiments/mnist_cross_eval.yaml
