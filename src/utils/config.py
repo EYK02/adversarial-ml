@@ -133,11 +133,13 @@ def _load_training(path_str: str, root: Path) -> TrainingConfig:
     )
 
 
-def _make_paths(run_dir: Path) -> ExperimentPaths:
+def _make_paths(run_dir: Path, cfg_dataset: str, cfg_model: str) -> ExperimentPaths:
+    shared_checkpoints = Path("checkpoints") / cfg_dataset / cfg_model
+
     return ExperimentPaths(
         run_dir     = run_dir,
         logs        = run_dir / "logs",
-        checkpoints = run_dir / "checkpoints",
+        checkpoints = shared_checkpoints,
         metrics     = run_dir / "metrics",
         figures     = run_dir / "figures",
     )
@@ -168,13 +170,16 @@ def load_experiment(path: str | Path, dry_run: bool = False) -> ExperimentConfig
     training = [_load_training(t, root) for t in raw["training"]]
     eval_attacks = [_load_attack(a, root) for a in raw["eval_attacks"]]
 
+    dataset         = _load_dataset(raw["dataset"], root)
+    model           = _load_model(raw["model"], root)
+
     run_name = _resolve_run_name(path, dry_run)
     run_dir  = Path("runs") / run_name
-    paths    = _make_paths(run_dir)
+    paths    = _make_paths(run_dir, dataset.name, model.name)
 
     cfg = ExperimentConfig(
-        dataset         = _load_dataset(raw["dataset"], root),
-        model           = _load_model(raw["model"], root),
+        dataset         = dataset,
+        model           = model,
         training        = training,
         eval_attacks    = eval_attacks,
         seeds           = raw["seeds"],
