@@ -73,10 +73,13 @@ def eval_robustness(
     defense_acc  = evaluate(defense_model, device, test_loader, eval_attack_fn, epsilon)
     duration     = time.perf_counter() - start
 
-    print(f"  eps={epsilon:.2f}  "
-          f"base={base_acc:.2f}%  "
-          f"defense={defense_acc:.2f}%  "
-          f"delta={defense_acc - base_acc:+.2f}%")
+    print(
+        f"  eps={epsilon:.2f} | "
+        f"base={base_acc:.2f}% | "
+        f"defense={defense_acc:.2f}% | "
+        f"delta={defense_acc - base_acc:+.2f}% | "
+        f"{duration:.1f}s"
+    )
 
     logger.log({
         "run_id":            run_id,

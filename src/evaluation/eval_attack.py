@@ -55,9 +55,13 @@ def eval_attack(
 
     start = time.perf_counter()
     acc   = evaluate(model, device, test_loader, attack_fn, epsilon)
-    duration = time.perf_counter() - start
-
-    print(f"  eps={epsilon:.2f}  acc={acc:.2f}%  ({duration:.1f}s)")
+    duration = time.perf_counter() - start    
+    
+    print(
+        f"  eps={epsilon:.2f} | "
+        f"acc={acc:.2f}% | "
+        f"{duration:.1f}s"
+    )
 
     logger.log({
         "run_id":        run_id,

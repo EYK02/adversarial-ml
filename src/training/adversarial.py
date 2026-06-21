@@ -159,6 +159,7 @@ def train(cfg, training_cfg, seed: int):
             "train_clean_accuracy": float(clean_acc),
             "train_adv_accuracy": float(adv_acc),
             "test_clean_accuracy": float(test_acc),
+            "duration_sec": duration
         })
 
         # ── best checkpoint ───────────────
