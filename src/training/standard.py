@@ -1,21 +1,19 @@
-# src/training/train.py
+# src/training/standard.py
 
-import os
 import argparse
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from models.cnn import CNN
-from datasets.loader import get_mnist_train_loader, get_mnist_test_loader
-from utils.seed import set_seed
-from old.src.utils.config import BATCH_SIZE, LEARNING_RATE, NUM_EPOCHS
-from evaluation.core import evaluate
-from utils.logger import JSONLLogger
 
-training_logger = JSONLLogger("artifacts/jsonl/training.jsonl")   
-model_logger = JSONLLogger("artifacts/jsonl/model_save.jsonl")    
+from src.datasets.mnist import get_train_loader, get_test_loader
+from src.evaluation.core import evaluate
+from src.models.factory import load_or_create_model
+from src.utils.config import load_experiment, ExperimentConfig, TrainingConfig
+from src.utils.logger import JSONLLogger
+from src.utils.seed import set_seed, get_device
 
-def train(model, device, loader, optimizer, criterion):
+
+def train_epoch(model, device, loader, optimizer, criterion):
     model.train()
     total_loss = 0
     correct = 0
@@ -29,73 +27,69 @@ def train(model, device, loader, optimizer, criterion):
         optimizer.step()
 
         total_loss += loss.item()
-        _, predicted = torch.max(outputs.data, 1)
-        correct += (predicted == labels).sum().item()
-    
-    avg_loss = total_loss / len(loader)
-    accuracy = 100. * correct / len(loader.dataset)
-    return avg_loss, accuracy
+        correct += (outputs.argmax(dim=1) == labels).sum().item()
 
-def main():
-    os.makedirs('models', exist_ok=True)
+    return total_loss / len(loader), 100.0 * correct / len(loader.dataset)
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--seed', type=int, default=0, help='Random seed for reproducibility')
-    args = parser.parse_args()
-    set_seed(args.seed)
 
-    model_save_path = f'models/cnn_mnist_seed{args.seed}.pth'
+def train(cfg: ExperimentConfig, training_cfg: TrainingConfig, seed: int):
+    set_seed(seed)
+    device = get_device()
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    train_loader = get_mnist_train_loader(BATCH_SIZE, seed=args.seed)
-    test_loader = get_mnist_test_loader(BATCH_SIZE)
+    checkpoint_path = cfg.paths.checkpoints / f"standard_seed{seed}.pth"
+    log_path        = cfg.paths.logs / "standard.jsonl"
 
-    model = CNN().to(device)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)    # Optimizer: Adam
-
-    if os.path.exists(model_save_path):
-        model.load_state_dict(torch.load(model_save_path))
-        print("[LOAD] Existing model found, skipping training.")
+    if checkpoint_path.exists():
+        print(f"Skipping standard training seed={seed} — checkpoint exists")
         return
 
-    for epoch in range(NUM_EPOCHS):
-        train_loss, train_acc = train(model, device, train_loader, optimizer, criterion)
-        test_loss, test_acc = evaluate(model, device, test_loader, criterion=criterion)
+    logger       = JSONLLogger(str(log_path))
+    train_loader = get_train_loader(cfg.dataset, batch_size=training_cfg.batch_size, seed=seed)
+    test_loader  = get_test_loader(cfg.dataset,  batch_size=training_cfg.batch_size)
 
-        training_logger.log({
-            "run_id":       "cnn_mnist_clean",
-            "run_type":     "training",
+    model     = load_or_create_model(cfg.model, device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=training_cfg.learning_rate)
 
-            "dataset":      "mnist",
-            "model":        "cnn_mnist",
+    for epoch in range(training_cfg.epochs):
+        train_loss, train_acc = train_epoch(model, device, train_loader, optimizer, criterion)
+        test_loss,  test_acc  = evaluate(model, device, test_loader, criterion=criterion)
 
-            "seed":         args.seed,
-            "epoch":        int(epoch+1),
-            
-            "train_loss":       float(train_loss),
-            "train_accuracy":   float(train_acc),
-            "test_loss":        float(test_loss),
-            "test_accuracy":    float(test_acc)
+        print(f"  epoch {epoch+1}/{training_cfg.epochs}  "
+              f"loss={train_loss:.4f}  train_acc={train_acc:.1f}%  test_acc={test_acc:.1f}%")
+
+        logger.log({
+            "run_type":       "training",
+            "dataset":        cfg.dataset.name,
+            "model":          cfg.model.name,
+            "seed":           seed,
+            "epoch":          epoch + 1,
+            "train_loss":     float(train_loss),
+            "train_accuracy": float(train_acc),
+            "test_loss":      float(test_loss),
+            "test_accuracy":  float(test_acc),
         })
 
-    torch.save(model.state_dict(), model_save_path)
+    cfg.paths.checkpoints.mkdir(parents=True, exist_ok=True)
+    torch.save(model.state_dict(), checkpoint_path)
+    print(f"  Saved checkpoint → {checkpoint_path}")
 
-    model_logger.log({
-        "run_id":       f"clean_cnn_mnist_seed{args.seed}",
-        "run_type":     "model_save",
-        "device":       str(device),
-        "seed":         args.seed,
 
-        "model":        "cnn_mnist",
-        "path":         model_save_path,
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--experiment", type=str, required=True)
+    parser.add_argument("--seed",       type=int, required=True)
+    parser.add_argument("--dry-run",    action="store_true")
+    args = parser.parse_args()
 
-        "BATCH_SIZE":       int(BATCH_SIZE),
-        "num_epochs":       int(NUM_EPOCHS),
-        "optimizer":        "adam",
-        "LEARNING_RATE":    LEARNING_RATE
-    })
-    
+    cfg          = load_experiment(args.experiment, dry_run=args.dry_run)
+    training_cfg = next(t for t in cfg.training if t.method == "standard")
 
-if __name__ == '__main__':
+    cfg.paths.logs.mkdir(parents=True, exist_ok=True)
+    cfg.paths.checkpoints.mkdir(parents=True, exist_ok=True)
+
+    train(cfg, training_cfg, seed=args.seed)
+
+
+if __name__ == "__main__":
     main()
