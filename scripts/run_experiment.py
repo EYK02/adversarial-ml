@@ -1,4 +1,4 @@
-# scripts/run_all.py
+# scripts/run_experiment.py
 
 import sys
 import argparse
