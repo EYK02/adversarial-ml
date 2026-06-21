@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from analysis.load_logs import load_all
-from analysis.aggregate import (
+from src.analysis.load_logs import load_all
+from src.analysis.aggregate import (
     attack_summary,
     seed_variance,
     step_complexity,
@@ -14,7 +14,7 @@ from analysis.aggregate import (
     defense_seed_variance,
     crosseval_pivot,
 )
-from analysis.plots import (
+from src.analysis.plots import (
     plot_training_curves,
     plot_robustness,
     plot_fgsm_seed_variance,

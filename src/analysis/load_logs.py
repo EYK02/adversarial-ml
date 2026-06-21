@@ -3,9 +3,9 @@
 import json
 from pathlib import Path
 
-import pandas as pd
+import pandas as pd 
 
-from utils.schema import normalize
+from src.utils.schema import normalize
 
 ARTIFACTS_DIR = Path("artifacts")
 JSONL_DIR     = ARTIFACTS_DIR / "jsonl"
