@@ -1,0 +1,4 @@
+# configs/models/cnn.yaml
+name: cnn
+num_classes: 10
+input_channels: 1

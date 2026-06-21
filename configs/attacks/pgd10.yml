@@ -1,0 +1,4 @@
+# configs/attacks/pgd10.yaml
+name: pgd
+steps: 10
+alpha: budget_scaled   # triggers 2.5*eps/steps in registry

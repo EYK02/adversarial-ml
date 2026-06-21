@@ -1,8 +1,8 @@
 # src/attacks/registry.py
 
 from functools import partial
-from src.attacks.fgsm import fgsm_attack
-from src.attacks.pgd import pgd_attack
+from attacks.fgsm import fgsm_attack
+from attacks.pgd import pgd_attack
 
 def get_attack_fn(name, **kwargs):
     if name == "fgsm":

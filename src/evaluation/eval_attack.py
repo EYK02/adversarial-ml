@@ -2,14 +2,14 @@
 
 import argparse
 import time
-from src.attacks.registry import get_attack_fn
-from src.data.loader import get_mnist_test_loader
-from src.evaluation.core import evaluate
-from src.logging.logger import JSONLLogger
-from src.logging.run_id import make_run_id
-from src.models.factory import load_model
-from src.utils.config import BATCH_SIZE
-from src.utils.reproducibility import set_seed, get_device
+from attacks.registry import get_attack_fn
+from datasets.loader import get_mnist_test_loader
+from evaluation.core import evaluate
+from utils.logger import JSONLLogger
+from utils.run_id import make_run_id
+from models.factory import load_model
+from old.src.utils.config import BATCH_SIZE
+from utils.seed import set_seed, get_device
 
 logger = JSONLLogger("artifacts/jsonl/attack_eval.jsonl")
 
@@ -22,9 +22,9 @@ def main():
     args = parser.parse_args()
 
     if args.dry_run:
-        from src.utils.config import EPSILONS_DRY as EPSILONS, DEFENSES_DRY as DEFENSES, EVAL_ATTACKS_DRY as EVAL_ATTACKS
+        from old.src.utils.config import EPSILONS_DRY as EPSILONS, DEFENSES_DRY as DEFENSES, EVAL_ATTACKS_DRY as EVAL_ATTACKS
     else:
-        from src.utils.config import EPSILONS as EPSILONS, DEFENSES as DEFENSES, EVAL_ATTACKS as EVAL_ATTACKS
+        from old.src.utils.config import EPSILONS as EPSILONS, DEFENSES as DEFENSES, EVAL_ATTACKS as EVAL_ATTACKS
 
     set_seed(args.seed)
     device  = get_device()
