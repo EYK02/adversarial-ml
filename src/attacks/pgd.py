@@ -25,24 +25,23 @@ def pgd_attack(
     for _ in range(restarts):
         # random start within epsilon ball
         adv_images = images + torch.empty_like(images).uniform_(-epsilon, epsilon)
-        adv_images = torch.clamp(adv_images, 0, 1).detach()
+        adv_images = torch.clamp(adv_images, images - epsilon, images + epsilon)
+
+        adv_images = adv_images.detach()
 
         for _ in range(steps):
             adv_images = adv_images.detach().requires_grad_(True)
 
             outputs = model(adv_images)
-            loss    = loss_fn(outputs, labels)
+            loss = loss_fn(outputs, labels)
 
-            model.zero_grad()
-            loss.backward()
+            grad = torch.autograd.grad(loss, adv_images)[0]
 
-            # gradient step
-            adv_images = adv_images + alpha * adv_images.grad.sign()
+            adv_images = adv_images + alpha * grad.sign()
 
-            # project back to epsilon ball around original images
-            perturbation = torch.clamp(adv_images - images, -epsilon, epsilon)
-            adv_images   = torch.clamp(images + perturbation, 0, 1).detach()
-
+            adv_images = torch.clamp(adv_images, images - epsilon, images + epsilon)
+            adv_images = adv_images.detach()
+            
         # keep worst-case across restarts (per image)
         with torch.no_grad():
             per_image_loss = nn.CrossEntropyLoss(reduction="none")(
