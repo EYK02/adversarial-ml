@@ -187,32 +187,47 @@ def build_eval_attack_ctx(
 def build_eval_robustness_ctx(
     cfg: ExperimentConfig,
     training_cfg: TrainingConfig,
+    eval_cfg: AttackConfig,
     seed: int,
+    epsilon: float,
 ) -> RunContext:
 
     device = _base_setup(cfg, seed)
 
-    # baseline model
+    # ---- models ----
     base_path = cfg.paths.checkpoints / f"standard_seed{seed}" / "final.pth"
     base_model = load_model(str(base_path), device, cfg.model)
 
-    # defense model
     defense_tag = training_cfg.attack.name + (
         str(training_cfg.attack.steps) if training_cfg.attack.steps else ""
     )
 
-    defense_path = cfg.paths.checkpoints / f"adv_{defense_tag}_seed{seed}" / "final.pth"
+    defense_path = (
+        cfg.paths.checkpoints / f"adv_{defense_tag}_seed{seed}" / "final.pth"
+    )
     defense_model = load_model(str(defense_path), device, cfg.model)
+
+    # ---- eval attack ----
+    steps = eval_cfg.steps
+    alpha = eval_cfg.alpha
+
+    if alpha is None and steps is not None:
+        alpha = 2.5 * epsilon / steps
+
+    resolved_eval_cfg = AttackConfig(
+        name=eval_cfg.name,
+        epsilon=epsilon,
+        steps=steps,
+        alpha=alpha,
+        restarts=eval_cfg.restarts,
+    )
+
+    eval_attack_fn, eval_attack_params = build_attack(resolved_eval_cfg)
 
     test_loader = get_test_loader(cfg.dataset, batch_size=64)
 
-    log_path = cfg.paths.logs / "eval_robustness.jsonl"
-    cfg.paths.logs.mkdir(parents=True, exist_ok=True)
-    logger = JSONLLogger(str(log_path))
-
-    defense_tag = training_cfg.attack.name + (
-        str(training_cfg.attack.steps) if training_cfg.attack.steps else ""
-    )
+    # ---- logging ----
+    logger = JSONLLogger(str(cfg.paths.logs / "eval_robustness.jsonl"))
 
     run_id = build_run_id(
         task="eval_robustness",
@@ -220,18 +235,26 @@ def build_eval_robustness_ctx(
         dataset=cfg.dataset.name,
         seed=seed,
         defense=defense_tag,
+        eval_attack=eval_cfg.name,
+        epsilon=epsilon,
     )
 
     return RunContext(
-        run_id=run_id,
         cfg=cfg,
         training_cfg=training_cfg,
         seed=seed,
         device=device,
+
         model=base_model,
         defense_model=defense_model,
-        optimizer=None,
-        criterion=None,
+
         loaders={"test": test_loader},
+
         logger=logger,
+
+        attack_fn=eval_attack_fn,
+        attack_params=eval_attack_params,
+
+        epsilon=epsilon,
+        run_id=run_id,
     )
