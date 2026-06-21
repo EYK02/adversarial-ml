@@ -1,6 +1,7 @@
 # configs/experiments/mnist_cross_eval.yaml
 dataset: configs/datasets/mnist.yaml
 model: configs/models/cnn.yaml
+
 training:
   - configs/training/standard.yaml
   - configs/training/adv_fgsm.yaml
@@ -8,13 +9,19 @@ training:
   - configs/training/adv_pgd10.yaml
   - configs/training/adv_pgd20.yaml
   - configs/training/adv_pgd40.yaml
+
 eval_attacks:
   - configs/attacks/fgsm.yaml
   - configs/attacks/pgd10.yaml
   - configs/attacks/pgd40.yaml
+
 seeds: [0,1,2,3,4,5,6,7,8,9]
+
 epsilon_eval: [0.00,0.05,0.10,0.15,0.20,0.25,0.28,0.30,0.32,0.35,0.40,0.45]
+
 epsilon_heatmap: [0.00,0.10,0.20,0.30,0.40]
+
+
 dry_run:
   seeds: [0]
   epsilon_eval: [0.1, 0.2, 0.3]
