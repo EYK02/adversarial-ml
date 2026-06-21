@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 import yaml
-import torch
-import torch.nn as nn
-import torch.optim as optim
 
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -76,21 +73,6 @@ class ExperimentPaths:
     checkpoints:  Path
     metrics:      Path
     figures:      Path
-
-
-@dataclass
-class RunContext:
-    cfg: ExperimentConfig
-    training: TrainingConfig
-    device: torch.device
-    seed: int
-
-    model: nn.Module
-    optimizer: optim.Optimizer
-    criterion: nn.Module
-
-    loaders: dict[str, torch.utils.data.DataLoader]
-    paths: ExperimentPaths
 
 
 # ─────────────────────────────────────────
