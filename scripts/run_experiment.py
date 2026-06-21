@@ -106,7 +106,7 @@ def build_experiments(cfg: ExperimentConfig, dry_run: bool) -> list[tuple[str, l
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--experiment", type=str, required=True,
+    parser.add_argument("--config", type=str, required=True,
                         help="Path to experiment config, e.g. configs/experiments/mnist_cross_eval.yaml")
     parser.add_argument("--dry-run",    action="store_true")
     parser.add_argument("--stage",      type=int, default=None,
