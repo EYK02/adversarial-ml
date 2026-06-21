@@ -1,7 +1,10 @@
+# src/training/adversarial.py
+
 import argparse
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import time
 
 from src.attacks.registry import get_attack_fn
 from src.datasets.mnist import get_train_loader, get_test_loader
@@ -118,6 +121,8 @@ def train(cfg, training_cfg, seed: int):
 
     for epoch in range(start_epoch, training_cfg.epochs):
 
+        start_time = time.perf_counter()
+
         train_loss, clean_acc, adv_acc = train_epoch(
             model,
             device,
@@ -130,12 +135,15 @@ def train(cfg, training_cfg, seed: int):
 
         test_acc = evaluate(model, device, test_loader)
 
+        duration = time.perf_counter() - start_time
+
         print(
-            f"epoch {epoch+1}/{training_cfg.epochs} | "
+            f"  epoch {epoch+1}/{training_cfg.epochs} | "
             f"loss={train_loss:.4f} | "
             f"clean={clean_acc:.1f}% | "
             f"adv={adv_acc:.1f}% | "
-            f"test={test_acc:.1f}%"
+            f"test={test_acc:.1f}% | "
+            f"duration={duration:.1f}s"
         )
 
         # ── logging ───────────────────────

@@ -32,9 +32,9 @@ def eval_robustness(
     test_loader = get_test_loader(cfg.dataset, batch_size=64)
 
     # load baseline and defense checkpoints
-    base_path    = cfg.paths.checkpoints / f"standard_seed{seed}.pth"
+    base_path    = cfg.paths.checkpoints / f"standard_seed{seed}" / "final.pth"
     defense_tag  = _attack_tag(training_cfg)
-    defense_path = cfg.paths.checkpoints / f"adv_{defense_tag}_seed{seed}.pth"
+    defense_path = cfg.paths.checkpoints / f"adv_{defense_tag}_seed{seed}" / "final.pth"
 
     base_model    = load_model(str(base_path),    device, cfg.model)
     defense_model = load_model(str(defense_path), device, cfg.model)

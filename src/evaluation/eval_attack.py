@@ -23,7 +23,7 @@ def eval_attack(
     device      = get_device()
     test_loader = get_test_loader(cfg.dataset, batch_size=64)
 
-    checkpoint_path = cfg.paths.checkpoints / f"standard_seed{seed}.pth"
+    checkpoint_path = cfg.paths.checkpoints / f"standard_seed{seed}" / "final.pth"
     model           = load_model(str(checkpoint_path), device, cfg.model)
 
     # resolve alpha
