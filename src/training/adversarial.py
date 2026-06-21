@@ -9,7 +9,7 @@ import time
 from src.attacks.registry import get_attack_fn
 from src.datasets.mnist import get_train_loader, get_test_loader
 from src.evaluation.core import evaluate
-from src.models.factory import load_model, load_or_create_model
+from src.models.factory import load_or_create_model
 from src.utils.config import load_experiment, TrainingConfig
 from src.utils.logger import JSONLLogger
 from src.utils.seed import set_seed, get_device
