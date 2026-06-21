@@ -10,28 +10,33 @@ import torch.optim as optim
 from src.datasets.mnist import get_train_loader, get_test_loader
 from src.evaluation.core import evaluate
 from src.models.factory import load_or_create_model
-from src.utils.config import load_experiment, ExperimentConfig, TrainingConfig
+from src.utils.config import load_experiment, ExperimentConfig, TrainingConfig, RunContext
 from src.utils.logger import JSONLLogger
 from src.utils.seed import set_seed, get_device
 
 
-def train_epoch(model, device, loader, optimizer, criterion):
-    model.train()
+def train_epoch(ctx: RunContext):
+    ctx.model.train()
     total_loss = 0
     correct    = 0
 
+    loader = ctx.loaders["train"]
+
     for images, labels in loader:
-        images, labels = images.to(device), labels.to(device)
-        optimizer.zero_grad()
-        outputs = model(images)
-        loss    = criterion(outputs, labels)
+        images, labels = images.to(ctx.device), labels.to(ctx.device)
+        ctx.optimizer.zero_grad()
+        outputs = ctx.model(images)
+        loss    = ctx.criterion(outputs, labels)
         loss.backward()
-        optimizer.step()
+        ctx.optimizer.step()
 
         total_loss += loss.item()
         correct    += (outputs.argmax(dim=1) == labels).sum().item()
 
-    return total_loss / len(loader), 100.0 * correct / len(loader.dataset)
+    return (
+        total_loss / len(loader), 
+        100.0 * correct / len(loader.dataset)
+    )
 
 
 def train(cfg: ExperimentConfig, training_cfg: TrainingConfig, seed: int):
@@ -77,11 +82,26 @@ def train(cfg: ExperimentConfig, training_cfg: TrainingConfig, seed: int):
 
     print(f"[TRAIN] standard, seed={seed}")
 
+    ctx = RunContext(
+        cfg=cfg,
+        training_cfg=training_cfg,
+        seed=seed,
+        device=device,
+        model=model,
+        optimizer=optimizer,
+        criterion=nn.CrossEntropyLoss(),
+        loaders={
+            "train": train_loader,
+            "test": test_loader,
+        },
+        paths=cfg.paths,
+    )
+
     for epoch in range(start_epoch, training_cfg.epochs):
         start_time = time.perf_counter()
 
-        train_loss, train_acc = train_epoch(model, device, train_loader, optimizer, criterion)
-        test_loss,  test_acc  = evaluate(model, device, test_loader, criterion=criterion)
+        train_loss, train_acc = train_epoch(ctx)
+        test_loss,  test_acc  = evaluate(ctx)
 
         duration = time.perf_counter() - start_time
 

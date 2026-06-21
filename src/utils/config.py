@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 import yaml
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional
@@ -46,7 +50,6 @@ class TrainingConfig:
     epsilon:       Optional[float] = None   # adversarial only
     attack:        Optional[AttackConfig] = None  # adversarial only
 
-
 @dataclass
 class ExperimentConfig:
     dataset:          DatasetConfig
@@ -73,6 +76,21 @@ class ExperimentPaths:
     checkpoints:  Path
     metrics:      Path
     figures:      Path
+
+
+@dataclass
+class RunContext:
+    cfg: ExperimentConfig
+    training: TrainingConfig
+    device: torch.device
+    seed: int
+
+    model: nn.Module
+    optimizer: optim.Optimizer
+    criterion: nn.Module
+
+    loaders: dict[str, torch.utils.data.DataLoader]
+    paths: ExperimentPaths
 
 
 # ─────────────────────────────────────────
