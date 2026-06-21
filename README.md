@@ -82,51 +82,41 @@ adversarial-ml/
 ## Running Experiments
 
 ### Environment Setup
-
+# 1. Clone the repo
+```bash
+git clone https://github.com/EYK02/adversarial-ml.git
+cd adversarial-ml
+```
+# 2. Create and activate venv
 ```bash
 python -m venv venv
-source venv/bin/activate   # Linux/Mac
-venv\Scripts\activate      # Windows
+source venv/bin/activate        # Linux/Mac
+venv\Scripts\activate           # Windows
 ```
-
-Install dependencies:
+# 3. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
-
-
-
-### Full experiment
-
+# 4. Smoke test to verify pipeline
 ```bash
-python -m scripts.run_experiment --config configs/experiments/example.yaml
+python -m scripts.run_experiment \
+    --config configs/experiments/mnist_cross_eval.yaml \
+    --smoke-test
 ```
 
----
-
-### Run a specific stage
-
+# 5. Dry run to verify full config
 ```bash
-python -m scripts.run_experiment --config configs/experiments/example.yaml --stage 3
+python -m scripts.run_experiment \
+    --config configs/experiments/mnist_cross_eval.yaml \
+    --dry-run
 ```
 
-Stages typically include:
-
-1. standard training
-2. baseline evaluation
-3. adversarial training
-4. robustness evaluation
-5. analysis
-
----
-
-### Dry run (no training)
-
+# 6. Full run
 ```bash
-python -m scripts.run_experiment --config configs/experiments/example.yaml --dry-run
+python -m scripts.run_experiment \
+    --config configs/experiments/mnist_cross_eval.yaml
 ```
 
----
 
 ## Reproducibility
 
