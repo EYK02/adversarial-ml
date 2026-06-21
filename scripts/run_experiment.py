@@ -3,6 +3,7 @@
 import sys
 import argparse
 import shutil
+import time
 from pathlib import Path
 
 from src.utils.config import load_experiment, ExperimentConfig, TrainingConfig
@@ -118,6 +119,8 @@ def main():
                         help="Run a single stage only (1-5)")
     args = parser.parse_args()
 
+    start_time = time.perf_counter()
+
     cfg    = load_experiment(args.config, dry_run=args.dry_run, smoke_test=args.smoke_test)
     stages = build_experiments(cfg, dry_run=args.dry_run, smoke_test=args.smoke_test)
 
@@ -167,6 +170,9 @@ def main():
             runner.run(exp)
 
     runner.summary()
+
+    duration = time.perf_counter() - start_time
+    print(f"Total elapsed time: {duration:.1f}s")
 
 
 if __name__ == "__main__":
