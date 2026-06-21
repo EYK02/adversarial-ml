@@ -11,9 +11,14 @@ from src.utils.logger import JSONLLogger
 from src.models.factory import load_or_create_model, load_model
 from src.datasets.mnist import get_train_loader, get_test_loader
 from src.utils.config import ExperimentConfig, TrainingConfig, AttackConfig
+from src.attacks.registry import build_attack
+
 
 @dataclass
 class RunContext:
+    # Identity
+    run_id: Optional[str] = None
+
     # config
     cfg: ExperimentConfig
     training_cfg: Optional[TrainingConfig]
@@ -45,16 +50,29 @@ class RunContext:
     epoch: int = 0
     best_acc: float = 0.0
 
+
 def _base_setup(cfg: ExperimentConfig, seed: int):
     device = get_device()
     set_seed(seed)
     return device
 
+
+def build_run_id(*, task: str, model: str, dataset: str, seed: int, **kwargs) -> str:
+    from src.utils.run_id import make_run_id
+
+    return make_run_id(
+        task=task,
+        model=model,
+        dataset=dataset,
+        seed=seed,
+        **kwargs,
+    )
+
+
 def build_train_ctx(
     cfg: ExperimentConfig,
     training_cfg: TrainingConfig,
     seed: int,
-    logger: JSONLLogger,
 ) -> RunContext:
 
     device = _base_setup(cfg, seed)
@@ -66,11 +84,23 @@ def build_train_ctx(
     train_loader = get_train_loader(cfg.dataset, training_cfg.batch_size, seed)
     test_loader = get_test_loader(cfg.dataset, training_cfg.batch_size)
 
+    log_path = cfg.paths.logs / "standard.jsonl"
+    cfg.paths.logs.mkdir(parents=True, exist_ok=True)
+    logger = JSONLLogger(str(log_path))
+
     run_dir = Path("runs") / f"standard_seed{seed}"
     ckpt_dir = cfg.paths.checkpoints / f"standard_seed{seed}"
     ckpt_dir.mkdir(parents=True, exist_ok=True)
 
+    run_id = build_run_id(
+        task="train",
+        model=cfg.model.name,
+        dataset=cfg.dataset.name,
+        seed=seed,
+    )
+
     return RunContext(
+        run_id=run_id,
         cfg=cfg,
         training_cfg=training_cfg,
         seed=seed,
@@ -90,20 +120,54 @@ def build_train_ctx(
         best_ckpt=ckpt_dir / "best.pth",
     )
 
+
 def build_eval_attack_ctx(
     cfg: ExperimentConfig,
+    attack_cfg: AttackConfig,
     seed: int,
-    logger: JSONLLogger,
+    epsilon: float,
 ) -> RunContext:
 
     device = _base_setup(cfg, seed)
 
-    checkpoint_path = cfg.paths.checkpoints / f"standard_seed{seed}" / "final.pth"
+    checkpoint_path = (
+        cfg.paths.checkpoints / f"standard_seed{seed}" / "final.pth"
+    )
     model = load_model(str(checkpoint_path), device, cfg.model)
 
     test_loader = get_test_loader(cfg.dataset, batch_size=64)
 
+    # ---- resolve alpha ----
+    steps = attack_cfg.steps
+    alpha = attack_cfg.alpha
+
+    if alpha is None and steps is not None:
+        alpha = 2.5 * epsilon / steps
+
+    resolved_attack_cfg = AttackConfig(
+        name=attack_cfg.name,
+        epsilon=epsilon,
+        steps=steps,
+        alpha=alpha,
+        restarts=attack_cfg.restarts,
+    )
+
+    attack_fn, attack_params = build_attack(resolved_attack_cfg)
+
+    logger = JSONLLogger(str(cfg.paths.logs / "eval_attack.jsonl"))
+
+    run_id = build_run_id(
+        task="eval_attack",
+        model=cfg.model.name,
+        dataset=cfg.dataset.name,
+        attack=attack_cfg.name,
+        steps=steps,
+        epsilon=epsilon,
+        seed=seed,
+    )
+
     return RunContext(
+        run_id=run_id,
         cfg=cfg,
         training_cfg=None,
         seed=seed,
@@ -113,13 +177,17 @@ def build_eval_attack_ctx(
         criterion=None,
         loaders={"test": test_loader},
         logger=logger,
+
+        attack_fn=attack_fn,
+        attack_params=attack_params,
+        epsilon=epsilon,
     )
+
 
 def build_eval_robustness_ctx(
     cfg: ExperimentConfig,
     training_cfg: TrainingConfig,
     seed: int,
-    logger: JSONLLogger,
 ) -> RunContext:
 
     device = _base_setup(cfg, seed)
@@ -138,7 +206,24 @@ def build_eval_robustness_ctx(
 
     test_loader = get_test_loader(cfg.dataset, batch_size=64)
 
+    log_path = cfg.paths.logs / "eval_robustness.jsonl"
+    cfg.paths.logs.mkdir(parents=True, exist_ok=True)
+    logger = JSONLLogger(str(log_path))
+
+    defense_tag = training_cfg.attack.name + (
+        str(training_cfg.attack.steps) if training_cfg.attack.steps else ""
+    )
+
+    run_id = build_run_id(
+        task="eval_robustness",
+        model=cfg.model.name,
+        dataset=cfg.dataset.name,
+        seed=seed,
+        defense=defense_tag,
+    )
+
     return RunContext(
+        run_id=run_id,
         cfg=cfg,
         training_cfg=training_cfg,
         seed=seed,

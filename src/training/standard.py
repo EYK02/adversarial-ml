@@ -4,13 +4,10 @@ import argparse
 import time
 
 import torch
-import torch.nn as nn
-import torch.optim as optim
 
 from src.evaluation.core import evaluate
-from src.utils.config import load_experiment, ExperimentConfig, TrainingConfig
+from src.utils.config import load_experiment
 from src.utils.context import RunContext, build_train_ctx
-from src.utils.seed import set_seed
 
 
 def train_epoch(ctx: RunContext):
@@ -39,29 +36,25 @@ def train_epoch(ctx: RunContext):
     )
 
 
-def train(cfg: ExperimentConfig, training_cfg: TrainingConfig, seed: int):
-    set_seed(seed)
-
-    ctx = build_train_ctx(cfg, training_cfg, seed)
-
+def train(ctx: RunContext):
     if ctx is None:
         print(f"[SKIP] {training_cfg.method} seed={seed} already completed.")
         return
 
-    print(f"[TRAIN] {training_cfg.method}, seed={seed}")
-
+    print(f"[TRAIN] {ctx.training_cfg.method}, seed={ctx.seed}")
+    
     start_epoch = 0
 
-    for epoch in range(start_epoch, training_cfg.epochs):
-        start_time = time.perf_counter()
+    for epoch in range(ctx.epoch, ctx.training_cfg.epochs):
+        start = time.perf_counter()
 
         train_loss, train_acc = train_epoch(ctx)
         test_loss, test_acc = evaluate(ctx)
 
-        duration = time.perf_counter() - start_time
+        duration = time.perf_counter() - start
 
         print(
-            f"  epoch {epoch+1}/{training_cfg.epochs} | "
+            f"  epoch {epoch+1}/{ctx.training_cfg.epochs} | "
             f"loss={train_loss:.4f} | "
             f"train={train_acc:.1f}% | "
             f"test={test_acc:.1f}% | "
@@ -107,7 +100,6 @@ def train(cfg: ExperimentConfig, training_cfg: TrainingConfig, seed: int):
 
     print(f"[DONE] saved → {ctx.final_ckpt}")
 
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--experiment", type=str, required=True)
@@ -127,7 +119,9 @@ def main():
 
     training_cfg = next(t for t in cfg.training if t.method == "standard")
 
-    train(cfg, training_cfg, seed=args.seed)
+    ctx = build_train_ctx(cfg, training_cfg, args.seed)
+
+    train(ctx)
 
 
 if __name__ == "__main__":
