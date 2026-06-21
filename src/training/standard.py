@@ -9,7 +9,7 @@ import torch.optim as optim
 
 from src.evaluation.core import evaluate
 from src.utils.config import load_experiment, ExperimentConfig, TrainingConfig
-from src.utils.context import RunContext, build_ctx
+from src.utils.context import RunContext, build_train_ctx
 from src.utils.seed import set_seed
 
 
@@ -42,7 +42,7 @@ def train_epoch(ctx: RunContext):
 def train(cfg: ExperimentConfig, training_cfg: TrainingConfig, seed: int):
     set_seed(seed)
 
-    ctx = build_ctx(cfg, training_cfg, seed)
+    ctx = build_train_ctx(cfg, training_cfg, seed)
 
     if ctx is None:
         print(f"[SKIP] {training_cfg.method} seed={seed} already completed.")

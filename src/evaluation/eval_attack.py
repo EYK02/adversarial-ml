@@ -1,3 +1,5 @@
+# src/evaluation/eval_attack.py
+
 import argparse
 import time
 
@@ -6,7 +8,7 @@ from src.datasets.mnist import get_test_loader
 from src.evaluation.core import evaluate
 from src.models.factory import load_model
 from src.utils.config import load_experiment, ExperimentConfig, AttackConfig
-from src.utils.context import build_ctx, RunContext
+from src.utils.context import build_attack_ctx, RunContext
 from src.utils.logger import JSONLLogger
 from src.utils.run_id import make_run_id
 from src.utils.seed import set_seed, get_device
@@ -120,7 +122,7 @@ def main():
     # ---- evaluation loop ----
     for epsilon in cfg.epsilon_eval:
 
-        ctx = build_ctx(
+        ctx = build_attack_ctx(
             cfg=cfg,
             attack_cfg=attack_cfg_resolved,
             seed=args.seed,
