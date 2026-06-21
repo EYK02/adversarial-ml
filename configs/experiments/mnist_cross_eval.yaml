@@ -31,3 +31,14 @@ dry_run:
   eval_attacks:
     - configs/attacks/fgsm.yaml
     - configs/attacks/pgd10.yaml
+
+
+smoke_test:
+  seeds: [0]
+  epsilon_eval: [0.1]
+  epsilon_heatmap: [0.1]
+  training:
+    - configs/training/standard_smoke.yaml
+    - configs/training/adv_fgsm_smoke.yaml
+  eval_attacks:
+    - configs/attacks/fgsm.yaml

@@ -1,0 +1,7 @@
+# configs/training/adv_fgsm_smoke.yaml
+method: adversarial
+epochs: 1
+batch_size: 64
+learning_rate: 0.001
+epsilon: 0.3
+attack: configs/attacks/fgsm.yaml

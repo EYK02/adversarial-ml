@@ -60,6 +60,7 @@ class ExperimentConfig:
     experiment_path:  str         
 
     dry_run:          bool = False
+    smoke_test:       bool = False
 
     # resolved at load time
     paths:            ExperimentPaths = field(default_factory=lambda: None)
@@ -147,10 +148,11 @@ def _make_paths(run_dir: Path, cfg_dataset: str, cfg_model: str) -> ExperimentPa
     )
 
 
-def _resolve_run_name(exp_path: Path, dry_run: bool) -> str:
+def _resolve_run_name(exp_path: Path, dry_run: bool, smoke_test: bool) -> str:
     from datetime import datetime
     stem = exp_path.stem
     tag  = "_dry" if dry_run else ""
+    tag  = "_smoke" if smoke_test else ""
     return f"{datetime.now().strftime('%Y-%m-%d')}_{stem}{tag}"
 
 
@@ -158,13 +160,21 @@ def _resolve_run_name(exp_path: Path, dry_run: bool) -> str:
 # Public API
 # ─────────────────────────────────────────
 
-def load_experiment(path: str | Path, dry_run: bool = False) -> ExperimentConfig:
+def load_experiment(
+        path: str | Path, 
+        dry_run: bool = False,
+        smoke_test: bool = False
+    ) -> ExperimentConfig:
+    
     path = Path(path).resolve()
     root = path.parent.parent.parent  # configs/ root — one level above experiments/
     raw  = _load_yaml(path)
 
-    # apply dry_run overrides if present
-    if dry_run and "dry_run" in raw:
+    # apply override runs
+    if smoke_test and "smoke_test" in raw:
+        for key, val in raw["smoke_test"].items():
+            raw[key] = val
+    elif dry_run and "dry_run" in raw:
         overrides = raw["dry_run"]
         for key, val in overrides.items():
             raw[key] = val
@@ -175,7 +185,7 @@ def load_experiment(path: str | Path, dry_run: bool = False) -> ExperimentConfig
     dataset         = _load_dataset(raw["dataset"], root)
     model           = _load_model(raw["model"], root)
 
-    run_name = _resolve_run_name(path, dry_run)
+    run_name = _resolve_run_name(path, dry_run, smoke_test)
     run_dir  = Path("runs") / run_name
     paths    = _make_paths(run_dir, dataset.name, model.name)
 
@@ -190,6 +200,7 @@ def load_experiment(path: str | Path, dry_run: bool = False) -> ExperimentConfig
         run_name        = run_name,
         experiment_path = str(path),
         dry_run         = dry_run,
+        smoke_test      = smoke_test,
         paths           = paths,
     )
 

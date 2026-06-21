@@ -109,11 +109,12 @@ def main():
     parser.add_argument("--config", type=str, required=True,
                         help="Path to experiment config, e.g. configs/experiments/mnist_cross_eval.yaml")
     parser.add_argument("--dry-run",    action="store_true")
+    parser.add_argument("--smoke-test",    action="store_true")
     parser.add_argument("--stage",      type=int, default=None,
                         help="Run a single stage only (1-5)")
     args = parser.parse_args()
 
-    cfg    = load_experiment(args.config, dry_run=args.dry_run)
+    cfg    = load_experiment(args.config, dry_run=args.dry_run, smoke_test=args.smoke_test)
     stages = build_experiments(cfg, dry_run=args.dry_run)
 
     # create run directories
@@ -145,6 +146,7 @@ def main():
     print(f"  Run : {cfg.run_name}")
     print(f"  Config : {cfg.experiment_path}")
     print(f"  Dry run : {cfg.dry_run}")
+    print(f"  Smoke test : {cfg.smoke_test}")
     print(f"  Seeds : {cfg.seeds}")
     print(f"  Jobs : {len(all_jobs)}")
     print(f"{'═' * 60}")
