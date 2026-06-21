@@ -2,6 +2,7 @@
 
 import sys
 import argparse
+import shutil
 from pathlib import Path
 
 from src.utils.config import load_experiment, ExperimentConfig, TrainingConfig
@@ -116,10 +117,18 @@ def main():
     stages = build_experiments(cfg, dry_run=args.dry_run)
 
     # create run directories
-    cfg.paths.logs.mkdir(parents=True,        exist_ok=True)
-    cfg.paths.checkpoints.mkdir(parents=True, exist_ok=True)
-    cfg.paths.metrics.mkdir(parents=True,     exist_ok=True)
-    cfg.paths.figures.mkdir(parents=True,     exist_ok=True)
+    for p in [
+        cfg.paths.logs, 
+        cfg.paths.metrics, 
+        cfg.paths.figures
+        ]:
+        p.mkdir(parents=True, exist_ok=True)
+
+    snapshot_path = cfg.paths.run_dir / "config.yaml"
+    snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if not snapshot_path.exists():
+        shutil.copy2(cfg.experiment_path, snapshot_path)
 
     runner = ExperimentRunner()
 
