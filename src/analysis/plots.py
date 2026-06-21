@@ -82,6 +82,13 @@ def plot_pgd_seed_variance(df: pd.DataFrame) -> plt.Figure:
     pgd = df[df["attack"] == "pgd"]
     steps_list = sorted(pgd["steps"].dropna().unique())
 
+    if not steps_list:
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ax.text(0.5, 0.5, "No PGD data available",
+                ha="center", va="center", transform=ax.transAxes)
+        ax.set_visible(True)
+        return fig
+
     ncols = 2
     nrows = (len(steps_list) + ncols - 1) // ncols
 
@@ -252,7 +259,7 @@ def plot_defense_vs_baseline(df: pd.DataFrame) -> plt.Figure:
     ncols = 3
     nrows = (n + ncols - 1) // ncols
     fig, axes = plt.subplots(nrows, ncols, figsize=(5 * ncols, 4 * nrows), sharey=True)
-    axes_flat = axes.flatten() if n > 1 else [axes]
+    axes_flat = np.array(axes).flatten()
 
     for ax, (_, row) in zip(axes_flat, defense_configs.iterrows()):
         d_attack, d_steps = row["defense_attack"], row["defense_steps"]
