@@ -38,7 +38,7 @@ def plot_robustness(df: pd.DataFrame) -> plt.Figure:
             alpha=0.15, color=line.get_color(),
         )
 
-    ax.set_title("Baseline robustness — accuracy vs epsilon (mean ± 1σ across seeds)")
+    ax.set_title("Standardly trained robustness — accuracy vs epsilon (mean ± 1σ across seeds)")
     ax.set_xlabel("epsilon")
     ax.set_ylabel("accuracy (%)")
     ax.legend(fontsize=8)
@@ -152,7 +152,7 @@ def plot_defense_robustness(df: pd.DataFrame, eval_attack: str, eval_steps: int 
          .reset_index()
     )
     ax.plot(baseline["epsilon"], baseline["baseline_accuracy"],
-            marker="o", linestyle="--", color="black", label="baseline")
+            marker="o", linestyle="--", color="black", label="Standard")
 
     # one line per defense config
     defense_configs = (
@@ -185,7 +185,7 @@ def plot_defense_robustness(df: pd.DataFrame, eval_attack: str, eval_steps: int 
             color=line.get_color(),
         )
 
-    ax.set_title(f"Defense robustness under {eval_tag} (mean ± 1σ across seeds)")
+    ax.set_title(f"Adv. trained robustness under {eval_tag} (mean ± 1σ across seeds)")
     ax.set_xlabel("epsilon")
     ax.set_ylabel("accuracy (%)")
     ax.legend(fontsize=8)
@@ -270,10 +270,10 @@ def plot_defense_vs_baseline(df: pd.DataFrame) -> plt.Figure:
 
             ax.plot(sub["epsilon"], sub["baseline_accuracy"],
                     marker="o", linestyle="--", color=color, alpha=0.4,
-                    label=f"Undefended ({eval_label})")
+                    label=f"Standard ({eval_label})")
             ax.plot(sub["epsilon"], sub["defense_accuracy"],
                     marker="o", color=color, 
-                    label=f"Defended ({eval_label})")
+                    label=f"Adv. trained ({eval_label})")
 
         label = d_attack.upper() if pd.isna(d_steps) else f"PGD-{int(d_steps)}"
         ax.set_title(label)
@@ -285,7 +285,7 @@ def plot_defense_vs_baseline(df: pd.DataFrame) -> plt.Figure:
     for ax in axes_flat[n:]:
         ax.set_visible(False)
 
-    fig.suptitle("Undefended vs defended — FGSM and PGD-40 evaluation (mean across seeds)")
+    fig.suptitle("Standard vs Adv. trained — FGSM and PGD-40 evaluation (mean across seeds)")
     fig.tight_layout()
     return fig
 
