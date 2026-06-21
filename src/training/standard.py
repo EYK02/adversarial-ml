@@ -133,12 +133,12 @@ def main():
     parser.add_argument("--experiment", type=str, required=True)
     parser.add_argument("--seed",       type=int, required=True)
     parser.add_argument("--dry-run",    action="store_true")
+    parser.add_argument("--smoke-test",    action="store_true")
     args = parser.parse_args()
 
-    cfg          = load_experiment(args.experiment, dry_run=args.dry_run)
+    cfg          = load_experiment(args.experiment, dry_run=args.dry_run, smoke_test=args.smoke_test)
     training_cfg = next(t for t in cfg.training if t.method == "standard")
 
-    cfg.paths.logs.mkdir(parents=True,        exist_ok=True)
     cfg.paths.checkpoints.mkdir(parents=True, exist_ok=True)
 
     train(cfg, training_cfg, seed=args.seed)

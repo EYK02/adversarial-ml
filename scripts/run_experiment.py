@@ -16,13 +16,17 @@ def _attack_tag(training_cfg: TrainingConfig) -> str:
     return attack.name
 
 
-def build_experiments(cfg: ExperimentConfig, dry_run: bool) -> list[tuple[str, list[Experiment]]]:
+def build_experiments(
+        cfg: ExperimentConfig, 
+        dry_run: bool, 
+        smoke_test: bool
+    ) -> list[tuple[str, list[Experiment]]]:
     """
     Returns an ordered list of (stage_name, [Experiment, ...]) tuples.
     Each stage is run sequentially; experiments within a stage are
     run sequentially by the runner.
     """
-    dry_flag  = ["--dry-run"] if dry_run else []
+    mode_flag  = ["--dry-run"] if dry_run else ["--smoke-test"] if smoke_test else ""
     exp_flag = ["--experiment", cfg.experiment_path]
     py        = sys.executable
 
@@ -35,7 +39,7 @@ def build_experiments(cfg: ExperimentConfig, dry_run: bool) -> list[tuple[str, l
             [py, "-m", "src.training.standard",
              "--experiment", exp_flag[1],
              "--seed", str(seed)]
-            + dry_flag,
+            + mode_flag,
         )
         for seed in cfg.seeds
     ]
@@ -49,7 +53,7 @@ def build_experiments(cfg: ExperimentConfig, dry_run: bool) -> list[tuple[str, l
              "--experiment", exp_flag[1],
              "--attack", f"{a.name}{a.steps or ''}",
              "--seed", str(seed)]
-            + dry_flag,
+            + mode_flag,
         )
         for seed in cfg.seeds
         for a in cfg.eval_attacks
@@ -64,7 +68,7 @@ def build_experiments(cfg: ExperimentConfig, dry_run: bool) -> list[tuple[str, l
              "--experiment", exp_flag[1],
              "--training-config", _attack_tag(t),
              "--seed", str(seed)]
-            + dry_flag,
+            + mode_flag,
         )
         for t in cfg.training
         if t.method == "adversarial"
@@ -81,7 +85,7 @@ def build_experiments(cfg: ExperimentConfig, dry_run: bool) -> list[tuple[str, l
              "--training-config", _attack_tag(t),
              "--eval-attack",     f"{a.name}{a.steps or ''}",
              "--seed",            str(seed)]
-            + dry_flag,
+            + mode_flag,
         )
         for t in cfg.training
         if t.method == "adversarial"
@@ -96,7 +100,7 @@ def build_experiments(cfg: ExperimentConfig, dry_run: bool) -> list[tuple[str, l
             "analysis report",
             [py, "-m", "src.analysis.report",
              "--experiment", exp_flag[1]]
-            + dry_flag,
+            + mode_flag,
         )
     ]
     stages.append(("STAGE 5 — Analysis report", stage5))
@@ -115,7 +119,7 @@ def main():
     args = parser.parse_args()
 
     cfg    = load_experiment(args.config, dry_run=args.dry_run, smoke_test=args.smoke_test)
-    stages = build_experiments(cfg, dry_run=args.dry_run)
+    stages = build_experiments(cfg, dry_run=args.dry_run, smoke_test=args.smoke_test)
 
     # create run directories
     for p in [

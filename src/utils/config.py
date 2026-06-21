@@ -151,8 +151,7 @@ def _make_paths(run_dir: Path, cfg_dataset: str, cfg_model: str) -> ExperimentPa
 def _resolve_run_name(exp_path: Path, dry_run: bool, smoke_test: bool) -> str:
     from datetime import datetime
     stem = exp_path.stem
-    tag  = "_dry" if dry_run else ""
-    tag  = "_smoke" if smoke_test else ""
+    tag  = "_smoke" if smoke_test else "_dry" if dry_run else ""
     return f"{datetime.now().strftime('%Y-%m-%d')}_{stem}{tag}"
 
 
