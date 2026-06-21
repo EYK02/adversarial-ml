@@ -11,5 +11,5 @@ def fgsm_attack(model, device, data, target, epsilon):
     loss.backward()
     data_grad = data.grad.data
     perturbed_data = data + epsilon * data_grad.sign()
-    perturbed_data = torch.clamp(perturbed_data, -1, 1)
+    perturbed_data = torch.clamp(perturbed_data, 0, 1)
     return perturbed_data
