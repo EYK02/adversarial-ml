@@ -33,7 +33,11 @@ def create_model(cfg: ModelConfig, device: torch.device) -> torch.nn.Module:
 def load_model(path: str, device: torch.device, cfg: ModelConfig) -> torch.nn.Module:
     """Load a model from a checkpoint."""
     model = create_model(cfg, device)
-    model.load_state_dict(torch.load(path, map_location=device))
+    model.load_state_dict(torch.load(
+        path, 
+        map_location=device,
+        weights_only=True
+    ))
     model.eval()
     return model
 
