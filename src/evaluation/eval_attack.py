@@ -3,6 +3,8 @@
 import argparse
 import time
 
+import sys
+
 from src.evaluation.core import evaluate
 from src.utils.config import load_experiment
 from src.utils.context import build_eval_attack_ctx, RunContext
@@ -10,8 +12,8 @@ from src.utils.context import build_eval_attack_ctx, RunContext
 
 def eval_attack(ctx: RunContext) -> None:
     if ctx.logger.contains(ctx.run_id):
-        print(f"[SKIP] {ctx.run_id}")
-        return
+        print(f"  [SKIP] eps={ctx.epsilon:.2f}")
+        return False
 
     start = time.perf_counter()
 
@@ -29,6 +31,8 @@ def eval_attack(ctx: RunContext) -> None:
         "epsilon": float(ctx.epsilon),
         "duration_sec": float(duration),
     })
+
+    return True
 
 
 def main():
@@ -56,6 +60,8 @@ def main():
 
     print(f"Attack eval — {args.attack}, seed={args.seed}")
 
+    ran_any = False
+
     for epsilon in cfg.epsilon_eval:
         ctx = build_eval_attack_ctx(
             cfg=cfg,
@@ -64,7 +70,11 @@ def main():
             epsilon=epsilon,
         )
 
-        eval_attack(ctx)
+        if eval_attack(ctx):
+            ran_any = True
+    
+    if not ran_any:
+        sys.exit(2)
 
 
 if __name__ == "__main__":

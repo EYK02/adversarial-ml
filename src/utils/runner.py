@@ -27,22 +27,28 @@ class ExperimentRunner:
     def run(self, experiment: Experiment) -> None:
         print(f"\n=== {experiment.name} ===")
         job_start = time.perf_counter()
+        skipped = False
 
         try:
             subprocess.run(experiment.command, check=True)
             # print("SUCCESS")
         except subprocess.CalledProcessError as e:
-            print(f"FAILED ({e.returncode})")
-            self.failed.append(experiment.name)
+            if e.returncode == 2:
+                print("[SKIP] already completed")
+                skipped = True
+            else:
+                print(f"FAILED ({e.returncode})")
+                self.failed.append(experiment.name)
 
         duration = time.perf_counter() - job_start
-        self._times.append(duration)
+        if not skipped:
+            self._times.append(duration)
         self.completed += 1
 
         self._print_eta()
 
     def _print_eta(self) -> None:
-        if self.total == 0:
+        if self.total == 0 or not self._times:
             return
 
         avg        = sum(self._times) / len(self._times)

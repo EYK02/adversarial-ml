@@ -3,6 +3,7 @@
 import argparse
 import time
 import torch
+import sys
 
 from src.utils.config import load_experiment
 from src.utils.context import build_adv_train_ctx
@@ -15,7 +16,7 @@ def train(ctx):
     # early skip
     if is_training_complete(ctx):
         print(f"[SKIP] adversarial {ctx.training_cfg.attack.name} seed={ctx.seed} already completed.")
-        return
+        sys.exit(2)
         
     print(
         f"[TRAIN] adversarial {ctx.training_cfg.attack.name}, "

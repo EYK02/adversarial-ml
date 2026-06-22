@@ -2,13 +2,18 @@
 
 import argparse
 import time
+import sys
 
 from src.evaluation.core import evaluate
-from src.utils.config import load_experiment, TrainingConfig
+from src.utils.config import load_experiment
 from src.utils.context import RunContext, build_eval_robustness_ctx, attack_tag
 
 
 def eval_robustness(ctx: RunContext) -> None:
+    if ctx.logger.contains(ctx.run_id):
+        print(f"    [SKIP] eps={ctx.epsilon:.2f}")
+        return False
+    
     start = time.perf_counter()
 
     base_acc = evaluate(ctx)
@@ -45,6 +50,8 @@ def eval_robustness(ctx: RunContext) -> None:
         "delta": float(defense_acc - base_acc),
         "duration_sec": float(duration),
     })
+
+    return True
 
 def main():
     parser = argparse.ArgumentParser()
@@ -92,7 +99,14 @@ def main():
             epsilon=epsilon,
         )
 
-        eval_robustness(ctx)
+        ran_any = False
+        for epsilon in cfg.epsilon_eval:
+            ctx = build_eval_robustness_ctx(...)
+            if eval_robustness(ctx):
+                ran_any = True
+
+        if not ran_any:
+            sys.exit(2)
 
 
 if __name__ == "__main__":
