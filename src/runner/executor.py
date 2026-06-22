@@ -1,4 +1,17 @@
-# src/utils/runner.py
+# src/runner/runner.py
+
+"""
+Experiment execution engine.
+
+Provides a lightweight orchestration layer for running experiments
+as subprocess-based jobs in a staged pipeline.
+
+Responsibilities:
+- Execute experiments sequentially
+- Track progress, timing, and failures
+- Estimate remaining runtime (ETA)
+- Provide summary reports
+"""
 
 import subprocess
 import time
@@ -8,6 +21,17 @@ from datetime import timedelta
 
 @dataclass
 class Experiment:
+    """
+    Single executable experiment.
+
+    Attributes
+    ----------
+    name:
+        Human-readable experiment name.
+
+    command:
+        Full subprocess command to execute.
+    """
     name:    str
     command: list[str]
 
@@ -19,12 +43,28 @@ class ExperimentRunner:
     total:     int       = 0
     _times:    list[float] = field(default_factory=list)
     _start:    float       = field(default_factory=time.perf_counter)
+    """
+    Execution manager for a sequence of experiments.
+
+    Handles:
+    - sequential execution of subprocess jobs
+    - failure tracking
+    - timing statistics
+    - ETA estimation
+    - final summary reporting
+    """
 
     def set_total(self, n: int) -> None:
         self.total  = n
         self._start = time.perf_counter()
 
     def run(self, experiment: Experiment) -> None:
+        """
+        Execute a single experiment subprocess.
+
+        Tracks execution time, handles failures, and updates
+        internal progress statistics.
+        """
         print(f"\n=== {experiment.name} ===")
         job_start = time.perf_counter()
         skipped = False
@@ -64,6 +104,12 @@ class ExperimentRunner:
         )
 
     def summary(self) -> None:
+        """
+        Print final execution summary including:
+        - total runtime
+        - number of completed experiments
+        - failed experiments (if any)
+        """
         elapsed = time.perf_counter() - self._start
         print(f"\n{'═' * 60}")
         print(f"  Finished {self.completed} jobs in {_fmt(elapsed)}")

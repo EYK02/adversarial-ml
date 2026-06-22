@@ -1,6 +1,7 @@
 # src/utils/config.py
 
 from __future__ import annotations
+import os
 import yaml
 
 from pathlib import Path
@@ -32,7 +33,7 @@ class ModelConfig:
 
 @dataclass
 class AttackConfig:
-    name:       str
+    method:     str
     epsilon:    float | None = None
     steps:      Optional[int]   = None
     alpha:      Optional[float] = None  
@@ -117,7 +118,7 @@ def _load_attack(path_str: str, root: Path) -> AttackConfig:
     steps   = d.get("steps")
     epsilon = d.get("epsilon")
     return AttackConfig(
-        name        = d["name"],
+        method        = d["name"],
         steps       = steps,
         epsilon     = epsilon,
         alpha       = d.get("alpha"),
@@ -162,6 +163,20 @@ def _resolve_run_name(exp_path: Path, dry_run: bool, smoke_test: bool) -> str:
 # ─────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────
+
+def resolve_root_paths(cfg):
+    override_root = os.getenv("AML_ROOT")
+
+    if override_root:
+        root = Path(override_root)
+
+        cfg.paths.checkpoints = root / "checkpoints"
+        cfg.paths.logs        = root / "logs"
+        cfg.paths.metrics     = root / "metrics"
+        cfg.paths.figures     = root / "figures"
+        cfg.paths.run_dir     = root / "runs"
+
+    return cfg
 
 def load_experiment(
         path:       str | Path, 

@@ -1,8 +1,7 @@
 # src/datasets/mnist.py
 
 import numpy as np
-from random import random
-
+import random
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
@@ -24,7 +23,7 @@ def _get_transform(cfg: DatasetConfig) -> transforms.Compose:
     ])
 
 
-def get_train_loader(cfg: DatasetConfig, batch_size: int, seed: int) -> DataLoader:
+def get_mnist_train_loader(cfg: DatasetConfig, batch_size: int, seed: int) -> DataLoader:
     transform = _get_transform(cfg)
 
     dataset = datasets.MNIST(
@@ -43,11 +42,12 @@ def get_train_loader(cfg: DatasetConfig, batch_size: int, seed: int) -> DataLoad
         shuffle=True,
         generator=g,
         worker_init_fn=_seed_worker,
-        num_workers=0,
+        num_workers=2,
+        pin_memory=True
     )
 
 
-def get_test_loader(cfg: DatasetConfig, batch_size: int) -> DataLoader:
+def get_mnist_test_loader(cfg: DatasetConfig, batch_size: int) -> DataLoader:
     transform = _get_transform(cfg)
 
     dataset = datasets.MNIST(

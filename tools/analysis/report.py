@@ -2,8 +2,8 @@
 
 import argparse
 
-from src.analysis.load_logs import load_all
-from src.analysis.aggregate import (
+from tools.analysis.load_logs import load_all
+from tools.analysis.aggregate import (
     attack_summary,
     seed_variance,
     step_complexity,
@@ -14,7 +14,7 @@ from src.analysis.aggregate import (
     defense_seed_variance,
     crosseval_pivot,
 )
-from src.analysis.plots import (
+from tools.analysis.plots import (
     plot_training_curves,
     plot_robustness,
     plot_fgsm_seed_variance,
@@ -24,7 +24,7 @@ from src.analysis.plots import (
     plot_crosseval_heatmap,
     plot_defense_vs_baseline,
 )
-from src.utils.config import load_experiment, ExperimentConfig
+from src.utils.config import load_experiment, ExperimentConfig, resolve_root_paths
 
 
 def _save_fig(fig, path):
@@ -156,7 +156,10 @@ def main():
         smoke_test=args.smoke_test,
         run_name=args.run_name,
     )
+    cfg = resolve_root_paths(cfg)
+
     run_report(cfg)
+    
 
 
 if __name__ == "__main__":

@@ -37,8 +37,8 @@ def train_epoch(ctx):
     total = 0
 
     for x, y in loader:
-        x = x.to(ctx.device)
-        y = y.to(ctx.device)
+        x = x.to(ctx.device, non_blocking=True)
+        y = y.to(ctx.device, non_blocking=True)
 
         ctx.optimizer.zero_grad()
 

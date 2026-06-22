@@ -7,9 +7,10 @@ import torch
 import sys
 
 from src.evaluation.utils import evaluate
+from src.runner.context_builders import build_train_ctx
 from src.training.utils import train_epoch, is_training_complete
-from src.utils.config import load_experiment
-from src.utils.context import RunContext, build_train_ctx
+from src.utils.config import load_experiment, resolve_root_paths
+from src.runner.context import RunContext
 
 
 def train(ctx: RunContext):
@@ -91,6 +92,7 @@ def main():
         smoke_test=args.smoke_test,
         run_name=args.run_name
     )
+    cfg = resolve_root_paths(cfg)
 
     training_cfg = next(t for t in cfg.training if t.method == "standard")
 

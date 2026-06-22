@@ -5,8 +5,10 @@ import time
 import sys
 
 from src.evaluation.utils import evaluate
-from src.utils.config import load_experiment
-from src.utils.context import RunContext, build_eval_robustness_ctx, attack_tag
+from src.runner.context_builders import build_eval_robustness_ctx
+from src.runner.utils import attack_tag
+from src.utils.config import load_experiment, resolve_root_paths
+from src.runner.context import RunContext
 
 
 def eval_robustness(ctx: RunContext) -> None:
@@ -71,6 +73,7 @@ def main():
         smoke_test=args.smoke_test,
         run_name=args.run_name
     )
+    cfg = resolve_root_paths(cfg)
 
     training_cfg = next(
         t for t in cfg.training

@@ -1,0 +1,6 @@
+-r base.txt
+
+# Usually DO NOT install torch in Colab unless needed
+# If needed, uncomment:
+# torch
+# torchvision

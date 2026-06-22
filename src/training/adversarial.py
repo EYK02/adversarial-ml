@@ -5,21 +5,21 @@ import time
 import torch
 import sys
 
-from src.utils.config import load_experiment
-from src.utils.context import build_adv_train_ctx
+from src.attacks.registry import attack_tag
+from src.runner.context_builders import build_adv_train_ctx
+from src.utils.config import load_experiment, resolve_root_paths
 from src.training.utils import train_epoch, is_training_complete
 from src.evaluation.utils import evaluate
-from src.utils.context import attack_tag
 
 
 def train(ctx):
     # early skip
     if is_training_complete(ctx):
-        print(f"[SKIP] adversarial {ctx.training_cfg.attack.name} seed={ctx.seed} already completed.")
+        print(f"[SKIP] adversarial {ctx.training_cfg.attack.method} seed={ctx.seed} already completed.")
         sys.exit(2)
         
     print(
-        f"[TRAIN] adversarial {ctx.training_cfg.attack.name}, "
+        f"[TRAIN] adversarial {ctx.training_cfg.attack.method}, "
         f"seed={ctx.seed}, eps={ctx.training_cfg.epsilon}"
     )
 
@@ -45,7 +45,7 @@ def train(ctx):
             "dataset": ctx.cfg.dataset.name,
             "model": ctx.cfg.model.name,
             "seed": ctx.seed,
-            "attack": ctx.training_cfg.attack.name,
+            "attack": ctx.training_cfg.attack.method,
             "epsilon": float(ctx.training_cfg.epsilon),
             "epoch": epoch + 1,
             "train_loss": float(train_loss),
@@ -93,11 +93,12 @@ def main():
         smoke_test=args.smoke_test,
         run_name=args.run_name
     )
+    cfg = resolve_root_paths(cfg)
 
     training_cfg = next(
         t for t in cfg.training
         if t.method == "adversarial"
-        and attack_tag(t) == args.training_config
+        and attack_tag(t.attack) == args.training_config
     )
 
     ctx = build_adv_train_ctx(cfg, training_cfg, args.seed)
