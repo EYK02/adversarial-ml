@@ -6,8 +6,8 @@ import torch
 
 import sys
 
-from src.evaluation.core import evaluate
-from src.training.core import train_epoch, is_training_complete
+from src.evaluation.utils import evaluate
+from src.training.utils import train_epoch, is_training_complete
 from src.utils.config import load_experiment
 from src.utils.context import RunContext, build_train_ctx
 

@@ -7,8 +7,8 @@ import sys
 
 from src.utils.config import load_experiment
 from src.utils.context import build_adv_train_ctx
-from src.training.core import train_epoch, is_training_complete
-from src.evaluation.core import evaluate
+from src.training.utils import train_epoch, is_training_complete
+from src.evaluation.utils import evaluate
 from src.utils.context import attack_tag
 
 
