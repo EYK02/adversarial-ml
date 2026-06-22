@@ -2,8 +2,8 @@
 
 import argparse
 
-from src.analysis.load_logs import load_all
-from src.analysis.aggregate import (
+from tools.analysis.load_logs import load_all
+from tools.analysis.aggregate import (
     attack_summary,
     seed_variance,
     step_complexity,
@@ -14,7 +14,7 @@ from src.analysis.aggregate import (
     defense_seed_variance,
     crosseval_pivot,
 )
-from src.analysis.plots import (
+from tools.analysis.plots import (
     plot_training_curves,
     plot_robustness,
     plot_fgsm_seed_variance,
