@@ -11,7 +11,7 @@ import torch
 
 from src.attacks.registry import build_attack
 from src.models.factory import load_model
-from src.utils.config import load_experiment, AttackConfig
+from src.utils.config import load_experiment, AttackConfig, resolve_root_paths
 from src.utils.seed import set_seed, get_device
 from src.datasets.mnist import get_test_loader
 
@@ -164,6 +164,7 @@ def main():
     device = get_device()
 
     cfg = load_experiment(args.config)
+    cfg = resolve_root_paths(cfg)
     model = load_model(args.model_path, device, cfg.model)
     model.eval()
 

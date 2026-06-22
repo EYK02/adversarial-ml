@@ -1,6 +1,6 @@
 import argparse
 
-from src.utils.config import load_experiment
+from src.utils.config import load_experiment, resolve_root_paths
 from src.runner.experiment_builders import build_experiments
 from src.runner.core import run_stages
 
@@ -23,6 +23,7 @@ def main():
         smoke_test=args.smoke_test,
         run_name=args.run_name,
     )
+    cfg = resolve_root_paths(cfg)
 
     # Run full experiment pipeline
     run_stages(

@@ -7,7 +7,7 @@ import sys
 
 from src.evaluation.utils import evaluate
 from src.runner.context_builders import build_eval_attack_ctx
-from src.utils.config import load_experiment
+from src.utils.config import load_experiment, resolve_root_paths
 from src.runner.context import RunContext
 
 
@@ -52,11 +52,12 @@ def main():
         smoke_test=args.smoke_test,
         run_name=args.run_name
     )
+    cfg = resolve_root_paths(cfg)
 
     attack_cfg = next(
         a for a in cfg.eval_attacks
-        if (a.name == args.attack)
-        or (a.steps is not None and f"{a.name}{a.steps}" == args.attack)
+        if (a.method == args.attack)
+        or (a.steps is not None and f"{a.method}{a.steps}" == args.attack)
     )
 
     print(f"Attack eval — {args.attack}, seed={args.seed}")

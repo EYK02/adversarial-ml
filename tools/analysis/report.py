@@ -24,7 +24,7 @@ from tools.analysis.plots import (
     plot_crosseval_heatmap,
     plot_defense_vs_baseline,
 )
-from src.utils.config import load_experiment, ExperimentConfig
+from src.utils.config import load_experiment, ExperimentConfig, resolve_root_paths
 
 
 def _save_fig(fig, path):
@@ -156,7 +156,10 @@ def main():
         smoke_test=args.smoke_test,
         run_name=args.run_name,
     )
+    cfg = resolve_root_paths(cfg)
+
     run_report(cfg)
+    
 
 
 if __name__ == "__main__":

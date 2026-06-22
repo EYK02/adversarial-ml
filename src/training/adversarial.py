@@ -7,7 +7,7 @@ import sys
 
 from src.attacks.registry import attack_tag
 from src.runner.context_builders import build_adv_train_ctx
-from src.utils.config import load_experiment
+from src.utils.config import load_experiment, resolve_root_paths
 from src.training.utils import train_epoch, is_training_complete
 from src.evaluation.utils import evaluate
 
@@ -93,6 +93,7 @@ def main():
         smoke_test=args.smoke_test,
         run_name=args.run_name
     )
+    cfg = resolve_root_paths(cfg)
 
     training_cfg = next(
         t for t in cfg.training
