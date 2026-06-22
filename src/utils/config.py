@@ -120,7 +120,7 @@ def _load_attack(path_str: str, root: Path) -> AttackConfig:
         name        = d["name"],
         steps       = steps,
         epsilon     = epsilon,
-        alpha       = 2.5 * epsilon / steps if d.get("alpha") == "budget_scaled" or d.get("alpha") == None else d.get("alpha"),
+        alpha       = d.get("alpha"),
         restarts    = d.get("restarts", 1)
     )
 
