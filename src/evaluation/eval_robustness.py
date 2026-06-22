@@ -6,7 +6,6 @@ import time
 from src.evaluation.core import evaluate
 from src.utils.config import load_experiment, TrainingConfig
 from src.utils.context import RunContext, build_eval_robustness_ctx
-from src.utils.seed import set_seed
 
 
 def _attack_tag(training_cfg: TrainingConfig) -> str:
@@ -97,7 +96,6 @@ def main():
         or (a.steps is not None and f"{a.name}{a.steps}" == args.eval_attack)
     )
 
-    set_seed(args.seed)
     print(
         f"Defense eval — defense={args.training_config}, "
         f"eval={args.eval_attack}, seed={args.seed}"
