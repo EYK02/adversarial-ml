@@ -6,35 +6,37 @@ from src.attacks.pgd import pgd_attack
 from src.utils.config import AttackConfig
 
 
-def build_attack(spec: AttackConfig):
+def build_attack(cfg: AttackConfig):
 
-    if spec.name == "fgsm":
+    if cfg.name == "fgsm":
         return fgsm_attack, {}
 
-    if spec.name == "pgd":
+    if cfg.name == "pgd":
 
-        if spec.steps is None:
+        if cfg.steps is None:
             raise ValueError("PGD requires steps")
 
-        alpha = spec.alpha
+        alpha = cfg.alpha
 
         if alpha is None or alpha == "budget_scaled":
-            alpha = 2.5 * spec.epsilon / spec.steps
+            alpha = 2.5 * cfg.epsilon / cfg.steps
 
         fn = partial(
             pgd_attack,
-            steps=spec.steps,
+            steps=cfg.steps,
             alpha=alpha,
-            restarts=spec.restarts,
+            restarts=cfg.restarts,
         )
 
         return fn, {
-            "steps": spec.steps,
+            "steps": cfg.steps,
             "alpha": alpha,
-            "restarts": spec.restarts,
+            "restarts": cfg.restarts,
         }
+    
+    # if cfg,name == "CW":
 
-    raise ValueError(f"Unknown attack: {spec.name}")
+    raise ValueError(f"Unknown attack: {cfg.name}")
 
 
 def attack_tag(attack_cfg: AttackConfig) -> str:
