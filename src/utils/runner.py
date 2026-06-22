@@ -34,7 +34,7 @@ class ExperimentRunner:
             # print("SUCCESS")
         except subprocess.CalledProcessError as e:
             if e.returncode == 2:
-                print("[SKIP] already completed")
+                print("[SKIP] job already completed")
                 skipped = True
             else:
                 print(f"FAILED ({e.returncode})")

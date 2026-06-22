@@ -12,7 +12,7 @@ from src.utils.context import build_eval_attack_ctx, RunContext
 
 def eval_attack(ctx: RunContext) -> None:
     if ctx.logger.contains(ctx.run_id):
-        print(f"  [SKIP] eps={ctx.epsilon:.2f}")
+        print(f"  [SKIP] eps={ctx.epsilon:.2f} already completed")
         return False
 
     start = time.perf_counter()
