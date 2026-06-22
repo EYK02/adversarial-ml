@@ -12,7 +12,7 @@ from src.datasets.mnist import get_test_loader, get_train_loader
 from src.models.factory import load_model, load_or_create_model
 from src.runner.context import RunContext
 from src.runner.executor import Experiment
-from src.runner.utils import _ckpt_paths, _make_ckpt_dir, _make_logger, _resolve_alpha, _setup, attack_tag, build_run_id
+from src.runner.utils import ckpt_paths, make_ckpt_dir, make_logger, resolve_alpha, setup, attack_tag, build_run_id
 from src.utils.config import AttackConfig, ExperimentConfig, TrainingConfig
 
 
@@ -149,10 +149,10 @@ def build_train_ctx(
     seed:         int,
 ) -> RunContext:
 
-    device   = _setup(cfg, seed)
+    device   = setup(cfg, seed)
     model    = load_or_create_model(cfg.model, device)
-    ckpt_dir = _make_ckpt_dir(cfg.paths.checkpoints, f"standard_seed{seed}")
-    latest, final, best = _ckpt_paths(ckpt_dir)
+    ckpt_dir = make_ckpt_dir(cfg.paths.checkpoints, f"standard_seed{seed}")
+    latest, final, best = ckpt_paths(ckpt_dir)
 
     return RunContext(
         run_id=build_run_id(
@@ -169,7 +169,7 @@ def build_train_ctx(
             "train": get_train_loader(cfg.dataset, training_cfg.batch_size, seed),
             "test":  get_test_loader(cfg.dataset, training_cfg.batch_size),
         },
-        logger=_make_logger(cfg.paths.logs / "standard.jsonl"),
+        logger=make_logger(cfg.paths.logs / "standard.jsonl"),
         run_dir=Path("runs") / f"standard_seed{seed}",
         ckpt_dir=ckpt_dir,
         latest_ckpt=latest,
@@ -184,12 +184,12 @@ def build_adv_train_ctx(
     seed:         int,
 ) -> RunContext:
 
-    device  = _setup(cfg, seed)
+    device  = setup(cfg, seed)
     model   = load_or_create_model(cfg.model, device)
     tag     = attack_tag(training_cfg)
     epsilon = training_cfg.epsilon
 
-    alpha = _resolve_alpha(training_cfg.attack, epsilon)  # ← fixes the string-compare bug
+    alpha = resolve_alpha(training_cfg.attack, epsilon)  # ← fixes the string-compare bug
 
     attack_cfg = AttackConfig(
         name=training_cfg.attack.name,
@@ -200,8 +200,8 @@ def build_adv_train_ctx(
     )
     attack_fn, attack_params = build_attack(attack_cfg)
 
-    ckpt_dir = _make_ckpt_dir(cfg.paths.checkpoints, f"adv_{tag}_seed{seed}")
-    latest, final, best = _ckpt_paths(ckpt_dir)
+    ckpt_dir = make_ckpt_dir(cfg.paths.checkpoints, f"adv_{tag}_seed{seed}")
+    latest, final, best = ckpt_paths(ckpt_dir)
 
     return RunContext(
         run_id=build_run_id(
@@ -219,7 +219,7 @@ def build_adv_train_ctx(
             "train": get_train_loader(cfg.dataset, training_cfg.batch_size, seed),
             "test":  get_test_loader(cfg.dataset, training_cfg.batch_size),
         },
-        logger=_make_logger(cfg.paths.logs / f"adv_{tag}_seed{seed}.jsonl"),
+        logger=make_logger(cfg.paths.logs / f"adv_{tag}_seed{seed}.jsonl"),
         run_dir=Path("runs") / f"adv_{tag}_seed{seed}",
         ckpt_dir=ckpt_dir,
         latest_ckpt=latest,
@@ -238,13 +238,13 @@ def build_eval_attack_ctx(
     epsilon:    float,
 ) -> RunContext:
 
-    device = _setup(cfg, seed)
+    device = setup(cfg, seed)
     model  = load_model(
         str(cfg.paths.checkpoints / f"standard_seed{seed}" / "final.pth"),
         device, cfg.model,
     )
 
-    alpha = _resolve_alpha(attack_cfg, epsilon)
+    alpha = resolve_alpha(attack_cfg, epsilon)
 
     resolved = AttackConfig(
         name=attack_cfg.name,
@@ -265,7 +265,7 @@ def build_eval_attack_ctx(
         device=device,
         model=model,
         loaders={"test": get_test_loader(cfg.dataset, batch_size=64)},
-        logger=_make_logger(cfg.paths.logs / "eval_attack.jsonl"),
+        logger=make_logger(cfg.paths.logs / "eval_attack.jsonl"),
         attack_fn=attack_fn,
         attack_params=attack_params,
         epsilon=epsilon,
@@ -280,7 +280,7 @@ def build_eval_robustness_ctx(
     epsilon:      float,
 ) -> RunContext:
 
-    device       = _setup(cfg, seed)
+    device       = setup(cfg, seed)
     defense_tag  = attack_tag(training_cfg)
 
     base_model    = load_model(
@@ -292,7 +292,7 @@ def build_eval_robustness_ctx(
         device, cfg.model,
     )
 
-    alpha = _resolve_alpha(eval_cfg, epsilon)
+    alpha = resolve_alpha(eval_cfg, epsilon)
 
     resolved = AttackConfig(
         name=eval_cfg.name,
@@ -315,7 +315,7 @@ def build_eval_robustness_ctx(
         model=base_model,
         defense_model=defense_model,
         loaders={"test": get_test_loader(cfg.dataset, batch_size=64)},
-        logger=_make_logger(cfg.paths.logs / "eval_robustness.jsonl"),
+        logger=make_logger(cfg.paths.logs / "eval_robustness.jsonl"),
         attack_fn=eval_attack_fn,
         attack_params=eval_attack_params,
         epsilon=epsilon,
