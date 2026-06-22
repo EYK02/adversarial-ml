@@ -1,12 +1,36 @@
 # src/runner/run_id.py
 
-def make_run_id(task: str, model: str, dataset: str, **metadata) -> str:
-    """
-    Build a unique, human-readable run identifier.
+"""
+Run identifier generation utilities.
 
-    Fixed prefix: task_dataset_model
-    Then metadata keys in a consistent order:
-        defense, attack, steps, alpha, epsilon, seed
+Provides deterministic construction of human-readable experiment IDs
+based on configuration metadata (model, dataset, attack, seed, etc.).
+
+These IDs are used for:
+- logging directories
+- checkpoint paths
+- experiment tracking
+"""
+
+def make_run_id(
+    task: str, 
+    model: str, 
+    dataset: str, 
+    **metadata
+) -> str:
+    """
+    Generate a unique experiment identifier.
+
+    The ID encodes:
+    - task type (train, eval, adv_train, etc.)
+    - dataset
+    - model
+    - optional metadata (attack, epsilon, seed, etc.)
+
+    Returns
+    -------
+    str
+        Human-readable but structured run identifier.
     """
     parts = [task, dataset, model]
 

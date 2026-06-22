@@ -1,5 +1,20 @@
 # src/runner/context_builders.py
 
+"""
+RunContext builders.
+
+This module contains factory functions that construct fully initialized
+RunContext objects for different experiment modes:
+
+- standard training
+- adversarial training
+- attack evaluation
+- robustness evaluation
+
+Builders are responsible for wiring together:
+models, datasets, optimizers, attacks, logging, and filesystem paths.
+"""
+
 from pathlib import Path
 
 import torch
@@ -30,7 +45,19 @@ def build_train_ctx(
     training_cfg: TrainingConfig,
     seed:         int,
 ) -> RunContext:
+    """
+    Construct RunContext for standard (non-adversarial) training.
 
+    Returns a fully initialized context containing:
+    - model
+    - optimizer
+    - loss function
+    - training and test loaders
+    - checkpoint paths
+    - logger
+
+    No attack components are included.
+    """
     device   = setup(cfg, seed)
     model    = load_or_create_model(cfg.model, device)
     ckpt_dir = make_ckpt_dir(cfg.paths.checkpoints, f"standard_seed{seed}")
@@ -65,7 +92,16 @@ def build_adv_train_ctx(
     training_cfg: TrainingConfig,
     seed:         int,
 ) -> RunContext:
+    """
+    Construct RunContext for adversarial training.
 
+    Includes:
+    - standard training components (model, optimizer, loaders)
+    - attack function for on-the-fly adversarial example generation
+    - attack parameters (epsilon, alpha, steps, etc.)
+
+    The attack is injected via the central attack registry.
+    """
     device  = setup(cfg, seed)
     model   = load_or_create_model(cfg.model, device)
     tag     = attack_tag(training_cfg)
@@ -112,7 +148,14 @@ def build_eval_attack_ctx(
     seed:       int,
     epsilon:    float,
 ) -> RunContext:
+    """
+    Construct RunContext for evaluating model robustness under attack.
 
+    Loads a pretrained model and attaches an attack function
+    for inference-time adversarial evaluation.
+
+    No training components are initialized.
+    """
     device = setup(cfg, seed)
     model  = load_model(
         str(cfg.paths.checkpoints / f"standard_seed{seed}" / "final.pth"),
@@ -147,7 +190,16 @@ def build_eval_robustness_ctx(
     seed:         int,
     epsilon:      float,
 ) -> RunContext:
+    """
+    Construct RunContext for robustness comparison between:
+    - standard model
+    - adversarially trained (defense) model
 
+    Includes:
+    - two models (baseline + defense)
+    - evaluation attack function
+    - test data loader
+    """
     device       = setup(cfg, seed)
     defense_tag  = attack_tag(training_cfg)
 
