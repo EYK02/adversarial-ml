@@ -24,7 +24,7 @@ def _get_transform(cfg: DatasetConfig) -> transforms.Compose:
     ])
 
 
-def get_train_loader(cfg: DatasetConfig, batch_size: int, seed: int) -> DataLoader:
+def get_mnist_train_loader(cfg: DatasetConfig, batch_size: int, seed: int) -> DataLoader:
     transform = _get_transform(cfg)
 
     dataset = datasets.MNIST(
@@ -47,7 +47,7 @@ def get_train_loader(cfg: DatasetConfig, batch_size: int, seed: int) -> DataLoad
     )
 
 
-def get_test_loader(cfg: DatasetConfig, batch_size: int) -> DataLoader:
+def get_mnist_test_loader(cfg: DatasetConfig, batch_size: int) -> DataLoader:
     transform = _get_transform(cfg)
 
     dataset = datasets.MNIST(

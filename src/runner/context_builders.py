@@ -5,7 +5,7 @@ from pathlib import Path
 import torch
 
 from src.attacks.registry import build_attack
-from src.datasets.mnist import get_test_loader, get_train_loader
+from src.datasets.factory import get_test_loader, get_train_loader
 from src.models.factory import load_model, load_or_create_model
 from src.runner.context import RunContext
 from src.runner.utils import ckpt_paths, make_ckpt_dir, make_logger, resolve_alpha, setup, attack_tag, build_run_id
