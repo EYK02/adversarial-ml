@@ -160,11 +160,12 @@ def build_adv_train_ctx(
     epsilon = training_cfg.epsilon
 
     # resolve alpha
-    if alpha == "budget_scaled" or alpha is None:
-        if steps is None:
-            raise ValueError("Cannot compute alpha without steps")
+    if training_cfg.attack == "pgd":    
+        if alpha == "budget_scaled" or alpha is None:
+            if steps is None:
+                raise ValueError("Cannot compute alpha without steps")
 
-        alpha = 2.5 * float(epsilon) / float(steps)
+            alpha = 2.5 * float(epsilon) / float(steps)                 
 
     attack_cfg = AttackConfig(
         name=base_attack.name,
