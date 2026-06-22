@@ -138,6 +138,7 @@ def build_adv_train_ctx(
         checkpoint = torch.load(
             latest,
             map_location=device,
+            weights_only=True,
         )
 
         model.load_state_dict(checkpoint["model"])
