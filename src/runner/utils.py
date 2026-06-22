@@ -6,12 +6,12 @@ import torch
 
 from src.utils.config import AttackConfig, ExperimentConfig, TrainingConfig
 from src.utils.logger import JSONLLogger
-from src.utils.seed import set_seed
+from src.utils.seed import set_seed, get_device
 
 
 def _setup(cfg: ExperimentConfig, seed: int) -> torch.device:
     set_seed(seed)
-    return torch.get_device()
+    return get_device()
 
 
 def _make_logger(path: Path) -> JSONLLogger:
@@ -20,7 +20,7 @@ def _make_logger(path: Path) -> JSONLLogger:
 
 
 def _make_ckpt_dir(base: Path, tag: str) -> Path:
-    d = base / tag
+    d = base / tags
     d.mkdir(parents=True, exist_ok=True)
     return d
 
