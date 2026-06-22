@@ -1,0 +1,7 @@
+# configs/training/adv_pgd40.yaml
+method: adversarial
+attack: configs/attacks/pgd40.yaml
+epsilon: 0.3
+epochs: 20
+batch_size: 64
+learning_rate: 0.001

@@ -2,83 +2,69 @@
 
 import argparse
 import time
-from src.attacks.registry import get_attack_fn
-from src.data.loader import get_mnist_test_loader
-from src.evaluation.core import evaluate
-from src.logging.logger import JSONLLogger
-from src.logging.run_id import make_run_id
-from src.models.factory import load_model
-from src.utils.config import BATCH_SIZE
-from src.utils.reproducibility import set_seed, get_device
 
-logger = JSONLLogger("artifacts/jsonl/attack_eval.jsonl")
+from src.evaluation.core import evaluate
+from src.utils.config import load_experiment
+from src.utils.context import build_eval_attack_ctx, RunContext
+
+
+def eval_attack(ctx: RunContext) -> None:
+    if ctx.logger.contains(ctx.run_id):
+        print(f"[SKIP] {ctx.run_id}")
+        return
+
+    start = time.perf_counter()
+
+    acc = evaluate(ctx)
+
+    duration = time.perf_counter() - start
+
+    print(
+        f"eps={ctx.epsilon:.2f} | acc={acc:.2f}% | time={duration:.1f}s"
+    )
+
+    ctx.logger.log({
+        "run_id": ctx.run_id,
+        "accuracy": float(acc),
+        "epsilon": float(ctx.epsilon),
+        "duration_sec": float(duration),
+    })
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate adversarial attack on MNIST")
-    parser.add_argument("--attack", type=str,   default="fgsm", help="Attack to evaluate")
-    parser.add_argument("--steps",  type=int,   default=None,   help="PGD step count (PGD only)")
-    parser.add_argument("--seed",   type=int,   default=0,      help="Random seed")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--experiment", type=str, required=True)
+    parser.add_argument("--attack", type=str, required=True)
+    parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--smoke-test", action="store_true")
+    parser.add_argument("--run-name", type=str, default=None)
     args = parser.parse_args()
 
-    if args.dry_run:
-        from src.utils.config import EPSILONS_DRY as EPSILONS, DEFENSES_DRY as DEFENSES, EVAL_ATTACKS_DRY as EVAL_ATTACKS
-    else:
-        from src.utils.config import EPSILONS as EPSILONS, DEFENSES as DEFENSES, EVAL_ATTACKS as EVAL_ATTACKS
+    cfg = load_experiment(
+        args.experiment,
+        dry_run=args.dry_run,
+        smoke_test=args.smoke_test,
+        run_name=args.run_name
+    )
 
-    set_seed(args.seed)
-    device  = get_device()
-    test_loader = get_mnist_test_loader(BATCH_SIZE)
+    attack_cfg = next(
+        a for a in cfg.eval_attacks
+        if (a.name == args.attack)
+        or (a.steps is not None and f"{a.name}{a.steps}" == args.attack)
+    )
 
-    # baseline model
-    base_model_path = f"models/cnn_mnist_seed{args.seed}.pth"
-    base_model   = load_model(base_model_path, device)
+    print(f"Attack eval — {args.attack}, seed={args.seed}")
 
-    attack_fn, attack_params = get_attack_fn(args.attack, steps=args.steps)
-
-    print(f"Attack eval — attack={args.attack}, params={attack_params}, seed={args.seed}\n")
-
-    for epsilon in EPSILONS:
-        # Generate run_id
-        run_id = make_run_id(
-            task="attack_eval",
-            model="cnn_mnist",
-            attack=args.attack,
-            steps=attack_params.get("steps"),
-            epsilon=epsilon,
+    for epsilon in cfg.epsilon_eval:
+        ctx = build_eval_attack_ctx(
+            cfg=cfg,
+            attack_cfg=attack_cfg,
             seed=args.seed,
+            epsilon=epsilon,
         )
 
-        # Skip if evaluation already exists
-        if logger.contains(run_id):
-            print(f'   Skipping eps={epsilon:.2f} (already completed)')
-            continue
-
-        # Evaluate (timed)
-        start = time.perf_counter()
-
-        acc = evaluate(base_model, device, test_loader, attack_fn, epsilon)
-
-        duration = time.perf_counter() - start
-
-        print(f"  eps={epsilon:.2f}  acc={acc:.2f}%  ({duration:.1f}s)")
-
-        # Log evaluation
-        logger.log({
-            "run_id":        run_id,
-            "run_type":      "attack_eval",
-            "model":         "cnn_mnist",
-            "model_path":    base_model_path,
-            "dataset":       "mnist",
-            "seed":          args.seed,
-
-            "attack":        args.attack,
-            "attack_params": attack_params,
-            "epsilon":       float(epsilon),
-
-            "accuracy":      float(acc),
-            "duration_sec":  float(duration),
-        })
+        eval_attack(ctx)
 
 
 if __name__ == "__main__":

@@ -2,102 +2,97 @@
 
 import argparse
 import time
-from src.attacks.registry import get_attack_fn
-from src.data.loader import get_mnist_test_loader
-from src.evaluation.core import evaluate
-from src.logging.logger import JSONLLogger
-from src.logging.run_id import make_run_id
-from src.models.factory import load_model
-from src.utils.config import EPSILONS, BATCH_SIZE
-from src.utils.reproducibility import set_seed, get_device
 
-logger = JSONLLogger("artifacts/jsonl/defense_eval.jsonl")
+from src.evaluation.core import evaluate
+from src.utils.config import load_experiment, TrainingConfig
+from src.utils.context import RunContext, build_eval_robustness_ctx, attack_tag
+
+
+def eval_robustness(ctx: RunContext) -> None:
+    start = time.perf_counter()
+
+    base_acc = evaluate(ctx)
+    defense_acc = evaluate(ctx)
+
+    duration = time.perf_counter() - start
+
+    print(
+        f"eps={ctx.epsilon:.2f} | "
+        f"base={base_acc:.2f}% | "
+        f"defense={defense_acc:.2f}% | "
+        f"delta={defense_acc - base_acc:+.2f}% | "
+        f"time={duration:.1f}s"
+    )
+
+    ctx.logger.log({
+        "run_id": ctx.run_id,
+        "run_type": "eval_robustness",
+        "model": ctx.cfg.model.name,
+        "dataset": ctx.cfg.dataset.name,
+        "seed": ctx.seed,
+
+        "defense_attack": ctx.training_cfg.attack.name,
+        "defense_params": {
+            "steps": ctx.training_cfg.attack.steps
+        } if ctx.training_cfg.attack.steps else {},
+        "defense_epsilon": float(ctx.training_cfg.epsilon),
+
+        "eval_attack": ctx.attack_params,
+        "epsilon": float(ctx.epsilon),
+
+        "baseline_accuracy": float(base_acc),
+        "defense_accuracy": float(defense_acc),
+        "delta": float(defense_acc - base_acc),
+        "duration_sec": float(duration),
+    })
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate adversarial defense on MNIST")
-    parser.add_argument("--defense_attack",  type=str,   required=True, help="Attack used during adversarial training (fgsm, pgd)")
-    parser.add_argument("--defense_steps",   type=int,   default=None,  help="PGD steps used during adversarial training (PGD only)")
-    parser.add_argument("--defense_epsilon", type=float, required=True, help="Epsilon used during adversarial training")
-    parser.add_argument("--eval_attack",     type=str,   required=True, help="Attack to evaluate against (fgsm, pgd)")
-    parser.add_argument("--eval_steps",      type=int,   default=None,  help="PGD steps for evaluation attack (PGD only)")
-    parser.add_argument("--seed",            type=int,   default=0,     help="Random seed")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--experiment", type=str, required=True)
+    parser.add_argument("--training-config", type=str, required=True)
+    parser.add_argument("--eval-attack", type=str, required=True)
+    parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--smoke-test", action="store_true")
+    parser.add_argument("--run-name", type=str, default=None)
+
     args = parser.parse_args()
 
-    if args.dry_run:
-        from src.utils.config import EPSILONS_DRY as EPSILONS, DEFENSES_DRY as DEFENSES, EVAL_ATTACKS_DRY as EVAL_ATTACKS, NUM_SEEDS_DRY as SEEDS
-    else:
-        from src.utils.config import EPSILONS as EPSILONS, DEFENSES as DEFENSES, EVAL_ATTACKS as EVAL_ATTACKS, NUM_SEEDS as SEEDS
+    cfg = load_experiment(
+        args.experiment,
+        dry_run=args.dry_run,
+        smoke_test=args.smoke_test,
+        run_name=args.run_name
+    )
 
-    set_seed(args.seed)
-    device = get_device()
-    test_loader = get_mnist_test_loader(BATCH_SIZE)
+    training_cfg = next(
+        t for t in cfg.training
+        if t.method == "adversarial"
+        and attack_tag(t) == args.training_config
+    )
 
-    # baseline model
-    base_model_path = f"models/cnn_mnist_seed{args.seed}.pth"
-    base_model      = load_model(base_model_path, device)
+    eval_cfg = next(
+        a for a in cfg.eval_attacks
+        if (a.name == args.eval_attack)
+        or (a.steps is not None and f"{a.name}{a.steps}" == args.eval_attack)
+    )
 
-    # defense model
-    defense_tag      = f'pgd_steps{args.defense_steps}' if args.defense_attack == "pgd" and args.defense_steps is not None else args.defense_attack
-    defense_path    = f"models/adv_train_cnn_mnist_attack{defense_tag}_eps{args.defense_epsilon}_seed{args.seed}.pth"
-    defense_model   = load_model(defense_path, device)
+    print(
+        f"Defense eval — defense={args.training_config}, "
+        f"eval={args.eval_attack}, seed={args.seed}"
+    )
 
-    # eval attack
-    eval_attack_fn, eval_attack_params = get_attack_fn(args.eval_attack, steps=args.eval_steps)
+    for epsilon in cfg.epsilon_eval:
 
-    print(f"Defense eval — defense={defense_tag}, eval_attack={args.eval_attack}, seed={args.seed}\n")
-
-    for epsilon in EPSILONS:
-        # Generate run_id
-        run_id = make_run_id(
-            task="defense_eval",
-            model="cnn_mnist",
-            defense=args.defense_attack,
-            defense_steps=args.defense_steps,
-            eval_attack=args.eval_attack,
-            eval_steps=args.eval_steps,
-            defense_epsilon=args.defense_epsilon,
-            epsilon=epsilon,
+        ctx = build_eval_robustness_ctx(
+            cfg=cfg,
+            training_cfg=training_cfg,
+            eval_cfg=eval_cfg,
             seed=args.seed,
+            epsilon=epsilon,
         )
 
-        # Skip if evaluation already exists
-        if logger.contains(run_id):
-            print(f"   Skipping eps={epsilon:.2f} (already completed)")
-            continue
-
-        # Evaluate (timed)
-        start = time.perf_counter()
-
-        base_acc    = evaluate(base_model,    device, test_loader, eval_attack_fn, epsilon)
-        defense_acc = evaluate(defense_model, device, test_loader, eval_attack_fn, epsilon)
-
-        duration = time.perf_counter() - start
-
-        print(f"  eps={epsilon:.2f}  base={base_acc:.2f}%  defense={defense_acc:.2f}%  delta={defense_acc - base_acc:+.2f}%")
-
-        # Log evaluation
-        logger.log({
-            "run_id":   run_id,
-            "run_type": "defense_eval",
-            "model":    "cnn_mnist",
-            "dataset":  "mnist",
-            "seed":     args.seed,
-
-            "defense_attack":  args.defense_attack,
-            "defense_params":  {"steps": args.defense_steps} if args.defense_steps else {},
-            "defense_epsilon": args.defense_epsilon,
-            "defense_path":    defense_path,
-
-            "eval_attack":  args.eval_attack,
-            "eval_params":  eval_attack_params,
-            "epsilon":      float(epsilon),
-
-            "baseline_accuracy": float(base_acc),
-            "defense_accuracy":  float(defense_acc),
-            "delta":             float(defense_acc - base_acc),
-            "duration_sec":      float(duration),
-        })
+        eval_robustness(ctx)
 
 
 if __name__ == "__main__":
