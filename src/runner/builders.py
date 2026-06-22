@@ -1,8 +1,9 @@
 # src/runner/builders.py
 
+from dataclasses import dataclass
 from pathlib import Path
 import sys
-from typing import List, Tuple
+from typing import List
 
 import torch
 
@@ -15,13 +16,18 @@ from src.runner.utils import _ckpt_paths, _make_ckpt_dir, _make_logger, _resolve
 from src.utils.config import AttackConfig, ExperimentConfig, TrainingConfig
 
 
+@dataclass
+class Stage:
+    name: str
+    experiments: list[Experiment]
+
 
 def build_experiments(
     cfg: ExperimentConfig,
     dry_run: bool = False,
     smoke_test: bool = False,
     run_name: str | None = None,
-) -> List[Tuple[str, List[Experiment]]]:
+) -> list[Stage]:
     """
     Pure function:
     defines experiment graph (stages → experiments).
@@ -39,7 +45,7 @@ def build_experiments(
     py = sys.executable
     exp_path = cfg.experiment_path
 
-    stages: list[tuple[str, list[Experiment]]] = []
+    stages: list[Stage] = []
 
     # ─────────────────────────────────────────────
     # Stage 1: Standard training
@@ -56,7 +62,7 @@ def build_experiments(
         )
         for seed in cfg.seeds
     ]
-    stages.append(("STAGE 1 — Standard training", stage1))
+    stages.append(Stage("STAGE 1 — Standard training", stage1))
 
     # ─────────────────────────────────────────────
     # Stage 2: Attack evaluation
@@ -75,7 +81,7 @@ def build_experiments(
         for seed in cfg.seeds
         for a in cfg.eval_attacks
     ]
-    stages.append(("STAGE 2 — Attack evaluation", stage2))
+    stages.append(Stage("STAGE 2 — Attack evaluation", stage2))
 
     # ─────────────────────────────────────────────
     # Stage 3: Adversarial training
@@ -95,7 +101,7 @@ def build_experiments(
         if t.method == "adversarial"
         for seed in cfg.seeds
     ]
-    stages.append(("STAGE 3 — Adversarial training", stage3))
+    stages.append(Stage("STAGE 3 — Adversarial training", stage3))
 
     # ─────────────────────────────────────────────
     # Stage 4: Robustness evaluation
@@ -117,7 +123,7 @@ def build_experiments(
         for a in cfg.eval_attacks
         for seed in cfg.seeds
     ]
-    stages.append(("STAGE 4 — Robustness evaluation", stage4))
+    stages.append(Stage("STAGE 4 — Robustness evaluation", stage4))
 
     # ─────────────────────────────────────────────
     # Stage 5: Analysis
@@ -132,9 +138,10 @@ def build_experiments(
             ],
         )
     ]
-    stages.append(("STAGE 5 — Analysis report", stage5))
+    stages.append(Stage("STAGE 5 — Analysis report", stage5))
 
     return stages
+
 
 def build_train_ctx(
     cfg:          ExperimentConfig,

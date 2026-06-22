@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import Optional
 
 from src.utils.config import ExperimentConfig
 from src.runner.executor import ExperimentRunner, Experiment
@@ -20,10 +20,7 @@ def run_stages(
     smoke_test: bool = False,
     run_name: str = None,
 ) -> ExperimentRunner:
-    """
-    Core execution engine for staged experiment pipelines.
-    """
-
+    
     if runner is None:
         runner = ExperimentRunner()
 
@@ -37,24 +34,24 @@ def run_stages(
     # flatten experiments for ETA
     all_jobs = [
         exp
-        for i, (_, experiments) in enumerate(stages, start=1)
+        for i, s in enumerate(stages, start=1)
         if stage is None or stage == i
-        for exp in experiments
+        for exp in s.experiments
     ]
 
     runner.set_total(len(all_jobs))
 
     # execute stages
-    for i, (stage_name, experiments) in enumerate(stages, start=1):
+    for i, s in enumerate(stages, start=1):
 
         if stage is not None and stage != i:
             continue
 
         print(f"\n{'═' * 60}")
-        print(f"  {stage_name} ({len(experiments)} jobs)")
+        print(f"  {s.name} ({len(s.experiments)} jobs)")
         print(f"{'═' * 60}")
 
-        for exp in experiments:
+        for exp in s.experiments:
             runner.run(exp)
 
     runner.summary()
