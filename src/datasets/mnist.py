@@ -42,7 +42,7 @@ def get_mnist_train_loader(cfg: DatasetConfig, batch_size: int, seed: int) -> Da
         shuffle=True,
         generator=g,
         worker_init_fn=_seed_worker,
-        num_workers=1,
+        num_workers=2,
         pin_memory=True
     )
 
