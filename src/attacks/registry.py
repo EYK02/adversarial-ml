@@ -1,42 +1,43 @@
 # src/attacks/registry.py
 
 from functools import partial
+from typing import Callable
 from src.attacks.fgsm import fgsm_attack
 from src.attacks.pgd import pgd_attack
 from src.utils.config import AttackConfig
 
 
-def build_attack(cfg: AttackConfig):
+def build_attack(attack_cfg: AttackConfig) -> tuple[Callable, dict]:
 
-    if cfg.name == "fgsm":
+    if attack_cfg.name == "fgsm":
         return fgsm_attack, {}
 
-    if cfg.name == "pgd":
+    if attack_cfg.name == "pgd":
 
-        if cfg.steps is None:
+        if attack_cfg.steps is None:
             raise ValueError("PGD requires steps")
 
-        alpha = cfg.alpha
+        alpha = attack_cfg.alpha
 
         if alpha is None or alpha == "budget_scaled":
-            alpha = 2.5 * cfg.epsilon / cfg.steps
+            alpha = 2.5 * attack_cfg.epsilon / attack_cfg.steps
 
         fn = partial(
             pgd_attack,
-            steps=cfg.steps,
+            steps=attack_cfg.steps,
             alpha=alpha,
-            restarts=cfg.restarts,
+            restarts=attack_cfg.restarts,
         )
 
         return fn, {
-            "steps": cfg.steps,
+            "steps": attack_cfg.steps,
             "alpha": alpha,
-            "restarts": cfg.restarts,
+            "restarts": attack_cfg.restarts,
         }
     
     # if cfg,name == "CW":
 
-    raise ValueError(f"Unknown attack: {cfg.name}")
+    raise ValueError(f"Unknown attack: {attack_cfg.name}")
 
 
 def attack_tag(attack_cfg: AttackConfig) -> str:
