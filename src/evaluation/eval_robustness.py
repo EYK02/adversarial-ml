@@ -5,14 +5,8 @@ import time
 
 from src.evaluation.core import evaluate
 from src.utils.config import load_experiment, TrainingConfig
-from src.utils.context import RunContext, build_eval_robustness_ctx
+from src.utils.context import RunContext, build_eval_robustness_ctx, attack_tag
 
-
-def _attack_tag(training_cfg: TrainingConfig) -> str:
-    attack = training_cfg.attack
-    if attack.steps is not None:
-        return f"{attack.name}{attack.steps}"
-    return attack.name
 
 def eval_robustness(ctx: RunContext) -> None:
     start = time.perf_counter()
@@ -74,7 +68,7 @@ def main():
     training_cfg = next(
         t for t in cfg.training
         if t.method == "adversarial"
-        and _attack_tag(t) == args.training_config
+        and attack_tag(t) == args.training_config
     )
 
     eval_cfg = next(

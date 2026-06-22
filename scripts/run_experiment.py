@@ -7,14 +7,8 @@ import time
 from pathlib import Path
 
 from src.utils.config import load_experiment, ExperimentConfig, TrainingConfig
+from src.utils.context import attack_tag
 from src.utils.runner import Experiment, ExperimentRunner
-
-
-def _attack_tag(training_cfg: TrainingConfig) -> str:
-    attack = training_cfg.attack
-    if attack.steps is not None:
-        return f"{attack.name}{attack.steps}"
-    return attack.name
 
 
 def build_experiments(
@@ -69,10 +63,10 @@ def build_experiments(
     # ── Stage 3: Adversarial training ────────────────────────────
     stage3 = [
         Experiment(
-            f"adv train {_attack_tag(t)} seed={seed}",
+            f"adv train {attack_tag(t)} seed={seed}",
             [py, "-m", "src.training.adversarial",
              "--experiment", exp_flag[1],
-             "--training-config", _attack_tag(t),
+             "--training-config", attack_tag(t),
              "--seed", str(seed)]
             + mode_flag,
         )
@@ -85,10 +79,10 @@ def build_experiments(
     # ── Stage 4: Robustness evaluation ───────────────────────────────
     stage4 = [
         Experiment(
-            f"robustness eval def={_attack_tag(t)} eval={a.name}{a.steps or ''} seed={seed}",
+            f"robustness eval def={attack_tag(t)} eval={a.name}{a.steps or ''} seed={seed}",
             [py, "-m", "src.evaluation.eval_robustness",
              "--experiment",      exp_flag[1],
-             "--training-config", _attack_tag(t),
+             "--training-config", attack_tag(t),
              "--eval-attack",     f"{a.name}{a.steps or ''}",
              "--seed",            str(seed)]
             + mode_flag,
