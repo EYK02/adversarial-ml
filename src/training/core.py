@@ -10,9 +10,21 @@ def is_training_complete(ctx) -> bool:
 
 
 def get_inputs(ctx, x, y):
-    if ctx.attack_fn:
-        return ctx.attack_fn(...)
-    return x
+    if ctx.attack_fn is None:
+        return x, y
+
+    x_adv = ctx.attack_fn(
+        ctx.model,
+        ctx.device,
+        x,
+        y,
+        ctx.epsilon,
+    )
+
+    x = torch.cat((x, x_adv), dim=0)
+    y = torch.cat((y, y), dim=0)
+
+    return x, y
 
 
 def train_epoch(ctx):
@@ -30,7 +42,7 @@ def train_epoch(ctx):
 
         ctx.optimizer.zero_grad()
 
-        x = get_inputs(ctx, x, y)
+        x, y = get_inputs(ctx, x, y)
 
         out = ctx.model(x)
         loss = ctx.criterion(out, y)
