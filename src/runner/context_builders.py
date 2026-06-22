@@ -88,9 +88,9 @@ def build_train_ctx(
 
 
 def build_adv_train_ctx(
-    cfg:          ExperimentConfig,
+    cfg: ExperimentConfig,
     training_cfg: TrainingConfig,
-    seed:         int,
+    seed: int,
 ) -> RunContext:
     """
     Construct RunContext for adversarial training.
@@ -100,37 +100,86 @@ def build_adv_train_ctx(
     - attack function for on-the-fly adversarial example generation
     - attack parameters (epsilon, alpha, steps, etc.)
 
-    The attack is injected via the central attack registry.
+    Supports automatic resume from latest checkpoint.
     """
-    device  = setup(cfg, seed)
-    model   = load_or_create_model(cfg.model, device)
-    tag     = attack_tag(training_cfg.attack)
+
+    device = setup(cfg, seed)
+
+    model = load_or_create_model(cfg.model, device)
+
+    optimizer = torch.optim.Adam(
+        model.parameters(),
+        lr=training_cfg.learning_rate,
+    )
+
+    tag = attack_tag(training_cfg.attack)
     epsilon = training_cfg.epsilon
 
     attack_fn, attack_params = build_attack(
         with_epsilon(training_cfg.attack, epsilon)
     )
 
-    ckpt_dir = make_ckpt_dir(cfg.paths.checkpoints, f"adv_{tag}_seed{seed}")
+    ckpt_dir = make_ckpt_dir(
+        cfg.paths.checkpoints,
+        f"adv_{tag}_seed{seed}",
+    )
+
     latest, final, best = ckpt_paths(ckpt_dir)
+
+    # --------------------------------------------------
+    # Resume support
+    # --------------------------------------------------
+
+    start_epoch = 0
+    best_acc = 0.0
+
+    if latest.exists() and not final.exists():
+
+        checkpoint = torch.load(
+            latest,
+            map_location=device,
+        )
+
+        model.load_state_dict(checkpoint["model"])
+        optimizer.load_state_dict(checkpoint["optimizer"])
+
+        start_epoch = checkpoint["epoch"] + 1
+        best_acc = checkpoint["best_test_acc"]
+
+        print(
+            f"[RESUME] adv_{tag}_seed{seed} "
+            f"from epoch {start_epoch}"
+        )
 
     return RunContext(
         run_id=build_run_id(
-            task="adv_train", model=cfg.model.name, dataset=cfg.dataset.name,
-            attack=tag, seed=seed,
+            task="adv_train",
+            model=cfg.model.name,
+            dataset=cfg.dataset.name,
+            attack=tag,
+            seed=seed,
         ),
         cfg=cfg,
         training_cfg=training_cfg,
         seed=seed,
         device=device,
         model=model,
-        optimizer=torch.optim.Adam(model.parameters(), lr=training_cfg.learning_rate),
+        optimizer=optimizer,
         criterion=torch.nn.CrossEntropyLoss(),
         loaders={
-            "train": get_train_loader(cfg.dataset, training_cfg.batch_size, seed),
-            "test":  get_test_loader(cfg.dataset, training_cfg.batch_size),
+            "train": get_train_loader(
+                cfg.dataset,
+                training_cfg.batch_size,
+                seed,
+            ),
+            "test": get_test_loader(
+                cfg.dataset,
+                training_cfg.batch_size,
+            ),
         },
-        logger=make_logger(cfg.paths.logs / f"adv_{tag}_seed{seed}.jsonl"),
+        logger=make_logger(
+            cfg.paths.logs / f"adv_{tag}_seed{seed}.jsonl"
+        ),
         run_dir=Path("runs") / f"adv_{tag}_seed{seed}",
         ckpt_dir=ckpt_dir,
         latest_ckpt=latest,
@@ -139,6 +188,8 @@ def build_adv_train_ctx(
         attack_fn=attack_fn,
         attack_params=attack_params,
         epsilon=epsilon,
+        epoch=start_epoch,
+        best_acc=best_acc,
     )
 
 
