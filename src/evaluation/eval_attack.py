@@ -7,7 +7,7 @@ import sys
 
 from src.evaluation.utils import evaluate
 from src.utils.config import load_experiment
-from src.utils.context import build_eval_attack_ctx, RunContext
+from src.runner.context import build_eval_attack_ctx, RunContext
 
 
 def eval_attack(ctx: RunContext) -> None:

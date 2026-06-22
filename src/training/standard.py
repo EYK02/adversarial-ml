@@ -9,7 +9,7 @@ import sys
 from src.evaluation.utils import evaluate
 from src.training.utils import train_epoch, is_training_complete
 from src.utils.config import load_experiment
-from src.utils.context import RunContext, build_train_ctx
+from src.runner.context import RunContext, build_train_ctx
 
 
 def train(ctx: RunContext):

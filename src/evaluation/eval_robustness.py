@@ -6,7 +6,7 @@ import sys
 
 from src.evaluation.utils import evaluate
 from src.utils.config import load_experiment
-from src.utils.context import RunContext, build_eval_robustness_ctx, attack_tag
+from src.runner.context import RunContext, build_eval_robustness_ctx, attack_tag
 
 
 def eval_robustness(ctx: RunContext) -> None:
