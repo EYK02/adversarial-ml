@@ -5,14 +5,14 @@ import time
 import torch
 
 from src.evaluation.core import evaluate
-from src.training.core import train_epoch
+from src.training.core import train_epoch, is_training_complete
 from src.utils.config import load_experiment
 from src.utils.context import RunContext, build_train_ctx
 
 
 def train(ctx: RunContext):
-    if ctx is None:
-        print(f"[SKIP] {training_cfg.method} seed={seed} already completed.")
+    if is_training_complete(ctx):
+        print(f"[SKIP] {ctx.training_cfg.method} seed={ctx.seed} already completed.")
         return
 
     print(f"[TRAIN] {ctx.training_cfg.method}, seed={ctx.seed}")

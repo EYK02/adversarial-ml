@@ -1,5 +1,14 @@
 import torch
 
+
+def is_training_complete(ctx) -> bool:
+    return (
+        ctx.final_ckpt.exists() 
+        and ctx.best_ckpt.exists()
+        and ctx.latest_ckpt.exists()
+    )
+
+
 def get_inputs(ctx, x, y):
     if ctx.attack_fn:
         return ctx.attack_fn(...)

@@ -18,25 +18,26 @@ from src.attacks.registry import build_attack
 
 @dataclass
 class RunContext:
-    # Identity
-    run_id: Optional[str] = None
-
-    # config
+    # Identity / required core
     cfg: ExperimentConfig
-    training_cfg: Optional[TrainingConfig]
     seed: int
+    run_id: str
+
+    # optional training config
+    training_cfg: Optional[TrainingConfig] = None
 
     # runtime core
-    device: torch.device
-    model: nn.Module
-    optimizer: Optional[optim.Optimizer]
-    criterion: Optional[nn.Module]
+    device: Optional[torch.device] = None
+    model: Optional[nn.Module] = None
+    optimizer: Optional[optim.Optimizer] = None
+    criterion: Optional[nn.Module] = None
+    is_completed: Optional[bool] = None
 
     # data
-    loaders: dict[str, torch.utils.data.DataLoader]
+    loaders: dict[str, torch.utils.data.DataLoader] = None
 
     # logging
-    logger: JSONLLogger
+    logger: Optional[JSONLLogger] = None
 
     # paths
     run_dir: Optional[Path] = None
@@ -45,7 +46,11 @@ class RunContext:
     final_ckpt: Optional[Path] = None
     best_ckpt: Optional[Path] = None
 
-    # extra (evaluation-only)
+    # eval-specific extras
+    attack_fn: Optional[callable] = None
+    attack_params: Optional[dict] = None
+    epsilon: Optional[float] = None
+
     defense_model: Optional[nn.Module] = None
 
     # state
@@ -123,6 +128,106 @@ def build_train_ctx(
     )
 
 
+def attack_tag(training_cfg: TrainingConfig) -> str:
+    if training_cfg.attack.steps is not None:
+        return f"{training_cfg.attack.name}{training_cfg.attack.steps}"
+    return training_cfg.attack.name
+
+
+def build_adv_train_ctx(
+    cfg: ExperimentConfig,
+    training_cfg: TrainingConfig,
+    seed: int,
+) -> RunContext:
+
+    device = get_device()
+    set_seed(seed)
+
+    model = load_or_create_model(cfg.model, device)
+    optimizer = optim.Adam(model.parameters(), lr=training_cfg.learning_rate)
+    criterion = nn.CrossEntropyLoss()
+
+    train_loader = get_train_loader(cfg.dataset, training_cfg.batch_size, seed)
+    test_loader = get_test_loader(cfg.dataset, training_cfg.batch_size)
+
+    # ── attack resolution ───────────────────────────────
+    # ── attack resolution ───────────────────────────────
+
+    base_attack = training_cfg.attack
+
+    steps = base_attack.steps
+    alpha = base_attack.alpha
+    epsilon = training_cfg.epsilon
+
+    # resolve alpha
+    if alpha == "budget_scaled" or alpha is None:
+        if steps is None:
+            raise ValueError("Cannot compute alpha without steps")
+
+        alpha = 2.5 * float(epsilon) / float(steps)
+
+    attack_cfg = AttackConfig(
+        name=base_attack.name,
+        epsilon=epsilon,
+        steps=steps,
+        alpha=alpha,
+        restarts=base_attack.restarts,
+    )
+
+    attack_fn, attack_params = build_attack(attack_cfg)
+
+    # ── naming / tagging ───────────────────────────────
+    tag = attack_tag(training_cfg)
+
+    run_dir = Path("runs") / f"adv_{tag}_seed{seed}"
+    ckpt_dir = cfg.paths.checkpoints / f"adv_{tag}_seed{seed}"
+    ckpt_dir.mkdir(parents=True, exist_ok=True)
+
+    log_path = cfg.paths.logs / f"adv_{tag}_seed{seed}.jsonl"
+    cfg.paths.logs.mkdir(parents=True, exist_ok=True)
+
+    logger = JSONLLogger(str(log_path))
+
+
+    run_id = build_run_id(
+        task="adv_train",
+        model=cfg.model.name,
+        dataset=cfg.dataset.name,
+        attack=tag,
+        seed=seed,
+    )
+
+    return RunContext(
+        run_id=run_id,
+        cfg=cfg,
+        training_cfg=training_cfg,
+        seed=seed,
+
+        device=device,
+        model=model,
+        optimizer=optimizer,
+        criterion=criterion,
+
+        loaders={
+            "train": train_loader,
+            "test": test_loader,
+        },
+
+        logger=logger,
+
+        # adversarial state
+        attack_fn=attack_fn,
+        attack_params=attack_params,
+        epsilon=epsilon,
+
+        run_dir=run_dir,
+        ckpt_dir=ckpt_dir,
+        latest_ckpt=ckpt_dir / "latest.pth",
+        final_ckpt=ckpt_dir / "final.pth",
+        best_ckpt=ckpt_dir / "best.pth",
+    )
+
+
 def build_eval_attack_ctx(
     cfg: ExperimentConfig,
     attack_cfg: AttackConfig,
@@ -143,7 +248,7 @@ def build_eval_attack_ctx(
     steps = attack_cfg.steps
     alpha = attack_cfg.alpha
 
-    if alpha is None and steps is not None:
+    if alpha == "budget_scaled":
         alpha = 2.5 * epsilon / steps
 
     resolved_attack_cfg = AttackConfig(
