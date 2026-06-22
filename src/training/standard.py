@@ -34,6 +34,7 @@ def train(ctx: RunContext):
         )
 
         ctx.logger.log({
+            "run_id": ctx.run_id,
             "run_type": "training",
             "dataset": ctx.cfg.dataset.name,
             "model": ctx.cfg.model.name,
