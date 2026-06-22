@@ -1,8 +1,7 @@
 # src/datasets/mnist.py
 
 import numpy as np
-from random import random
-
+import random
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
