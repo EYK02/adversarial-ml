@@ -4,8 +4,8 @@
 from dataclasses import dataclass
 import sys
 
+from src.attacks.registry import attack_tag
 from src.runner.executor import Experiment
-from src.runner.utils import attack_tag
 from src.utils.config import ExperimentConfig
 
 
@@ -62,11 +62,11 @@ def build_experiments(
     # ─────────────────────────────────────────────
     stage2 = [
         Experiment(
-            name=f"attack eval {a.name}{a.steps or ''} seed={seed}",
+            name=f"attack eval {a.method}{a.steps or ''} seed={seed}",
             command=[
                 py, "-m", "src.evaluation.eval_attack",
                 "--experiment", exp_path,
-                "--attack", f"{a.name}{a.steps or ''}",
+                "--attack", f"{a.method}{a.steps or ''}",
                 "--seed", str(seed),
                 *mode_flags,
             ],
@@ -81,11 +81,11 @@ def build_experiments(
     # ─────────────────────────────────────────────
     stage3 = [
         Experiment(
-            name=f"adv train {attack_tag(t)} seed={seed}",
+            name=f"adv train {attack_tag(t.attack)} seed={seed}",
             command=[
                 py, "-m", "src.training.adversarial",
                 "--experiment", exp_path,
-                "--training-config", attack_tag(t),
+                "--training-config", attack_tag(t.attack),
                 "--seed", str(seed),
                 *mode_flags,
             ],
@@ -101,12 +101,12 @@ def build_experiments(
     # ─────────────────────────────────────────────
     stage4 = [
         Experiment(
-            name=f"robustness eval def={attack_tag(t)} eval={a.name}{a.steps or ''} seed={seed}",
+            name=f"robustness eval def={attack_tag(t.attack)} eval={a.method}{a.steps or ''} seed={seed}",
             command=[
                 py, "-m", "src.evaluation.eval_robustness",
                 "--experiment", exp_path,
-                "--training-config", attack_tag(t),
-                "--eval-attack", f"{a.name}{a.steps or ''}",
+                "--training-config", attack_tag(t.attack),
+                "--eval-attack", f"{a.method}{a.steps or ''}",
                 "--seed", str(seed),
                 *mode_flags,
             ],

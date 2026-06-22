@@ -44,10 +44,10 @@ def build_attack(
     attack_params:
         Dictionary containing resolved attack parameters.
     """
-    if attack_cfg.name == "fgsm":
+    if attack_cfg.method == "fgsm":
         return fgsm_attack, {}
 
-    if attack_cfg.name == "pgd":
+    if attack_cfg.method == "pgd":
 
         if attack_cfg.steps is None:
             raise ValueError("PGD requires steps")
@@ -72,7 +72,7 @@ def build_attack(
     
     # if cfg,name == "CW":
 
-    raise ValueError(f"Unknown attack: {attack_cfg.name}")
+    raise ValueError(f"Unknown attack: {attack_cfg.method}")
 
 
 def attack_tag(
@@ -87,5 +87,5 @@ def attack_tag(
     pgd (steps=10) -> "pgd10"
     """
     if attack_cfg.steps is not None:
-        return f"{attack_cfg.name}{attack_cfg.steps}"
-    return attack_cfg.name
+        return f"{attack_cfg.method}{attack_cfg.steps}"
+    return attack_cfg.method

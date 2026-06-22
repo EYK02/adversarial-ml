@@ -32,7 +32,7 @@ def with_epsilon(
     epsilon: float,
 ) -> AttackConfig:
     return AttackConfig(
-        name=attack_cfg.name,
+        method=attack_cfg.method,
         epsilon=epsilon,
         steps=attack_cfg.steps,
         alpha=attack_cfg.alpha,
@@ -104,11 +104,11 @@ def build_adv_train_ctx(
     """
     device  = setup(cfg, seed)
     model   = load_or_create_model(cfg.model, device)
-    tag     = attack_tag(training_cfg)
+    tag     = attack_tag(training_cfg.attack)
     epsilon = training_cfg.epsilon
 
     attack_fn, attack_params = build_attack(
-        with_epsilon(training_cfg, epsilon)
+        with_epsilon(training_cfg.attack, epsilon)
     )
 
     ckpt_dir = make_ckpt_dir(cfg.paths.checkpoints, f"adv_{tag}_seed{seed}")
@@ -169,7 +169,7 @@ def build_eval_attack_ctx(
     return RunContext(
         run_id=build_run_id(
             task="eval_attack", model=cfg.model.name, dataset=cfg.dataset.name,
-            attack=attack_cfg.name, steps=attack_cfg.steps, epsilon=epsilon, seed=seed,
+            attack=attack_cfg.method, steps=attack_cfg.steps, epsilon=epsilon, seed=seed,
         ),
         cfg=cfg,
         seed=seed,
@@ -201,7 +201,7 @@ def build_eval_robustness_ctx(
     - test data loader
     """
     device       = setup(cfg, seed)
-    defense_tag  = attack_tag(training_cfg)
+    defense_tag  = attack_tag(training_cfg.attack)
 
     base_model    = load_model(
         str(cfg.paths.checkpoints / f"standard_seed{seed}" / "final.pth"),

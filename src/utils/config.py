@@ -32,7 +32,7 @@ class ModelConfig:
 
 @dataclass
 class AttackConfig:
-    name:       str
+    method:     str
     epsilon:    float | None = None
     steps:      Optional[int]   = None
     alpha:      Optional[float] = None  
@@ -117,7 +117,7 @@ def _load_attack(path_str: str, root: Path) -> AttackConfig:
     steps   = d.get("steps")
     epsilon = d.get("epsilon")
     return AttackConfig(
-        name        = d["name"],
+        method        = d["name"],
         steps       = steps,
         epsilon     = epsilon,
         alpha       = d.get("alpha"),
