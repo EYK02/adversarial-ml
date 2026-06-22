@@ -26,16 +26,15 @@ def train(ctx):
 
         start = time.perf_counter()
 
-        train_loss, clean_acc, adv_acc = train_epoch(ctx)
-        test_acc = evaluate(ctx)
+        train_loss, train_acc = train_epoch(ctx)
+        test_loss, test_acc = evaluate(ctx)
 
         duration = time.perf_counter() - start
 
         print(
             f"  epoch {epoch+1}/{ctx.training_cfg.epochs} | "
             f"loss={train_loss:.4f} | "
-            f"clean={clean_acc:.1f}% | "
-            f"adv={adv_acc:.1f}% | "
+            f"train_acc={train_acc:.1f}% | "
             f"test={test_acc:.1f}% | "
             f"duration={duration:.1f}s"
         )
@@ -49,8 +48,7 @@ def train(ctx):
             "epsilon": float(ctx.training_cfg.epsilon),
             "epoch": epoch + 1,
             "train_loss": float(train_loss),
-            "train_clean_accuracy": float(clean_acc),
-            "train_adv_accuracy": float(adv_acc),
+            "train_accuracy": float(train_acc),
             "test_clean_accuracy": float(test_acc),
             "duration_sec": duration,
         })

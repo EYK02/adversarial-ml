@@ -17,21 +17,8 @@ def _attack_tag(training_cfg: TrainingConfig) -> str:
 def eval_robustness(ctx: RunContext) -> None:
     start = time.perf_counter()
 
-    base_acc = evaluate(
-        ctx=ctx,
-        model=ctx.model,
-        split="test",
-        attack_fn=ctx.eval_attack_fn,
-        epsilon=ctx.epsilon,
-    )
-
-    defense_acc = evaluate(
-        ctx=ctx,
-        model=ctx.defense_model,
-        split="test",
-        attack_fn=ctx.eval_attack_fn,
-        epsilon=ctx.epsilon,
-    )
+    base_acc = evaluate(ctx)
+    defense_acc = evaluate(ctx)
 
     duration = time.perf_counter() - start
 
@@ -56,7 +43,7 @@ def eval_robustness(ctx: RunContext) -> None:
         } if ctx.training_cfg.attack.steps else {},
         "defense_epsilon": float(ctx.training_cfg.epsilon),
 
-        "eval_attack": ctx.eval_attack_params,
+        "eval_attack": ctx.attack_params,
         "epsilon": float(ctx.epsilon),
 
         "baseline_accuracy": float(base_acc),
