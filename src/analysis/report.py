@@ -146,9 +146,16 @@ def main():
     parser.add_argument("--experiment", type=str, required=True)
     parser.add_argument("--dry-run",    action="store_true")
     parser.add_argument("--smoke-test",    action="store_true")
+    parser.add_argument("--run-name", type=str, default=None)
+
     args = parser.parse_args()
 
-    cfg = load_experiment(args.experiment, dry_run=args.dry_run, smoke_test=args.smoke_test)
+    cfg = load_experiment(
+        args.experiment, 
+        dry_run=args.dry_run, 
+        smoke_test=args.smoke_test,
+        run_name=args.run_name,
+    )
     run_report(cfg)
 
 
