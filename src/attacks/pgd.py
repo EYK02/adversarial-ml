@@ -1,5 +1,9 @@
 # src/attacks/pgd.py
 
+"""
+Projected Gradient Descent (PGD).
+"""
+
 import torch
 import torch.nn as nn
 
@@ -14,6 +18,36 @@ def pgd_attack(
         steps   = 40,
         restarts = 1,
 ):
+    """
+    Generate adversarial examples using projected
+    gradient descent.
+
+    Parameters
+    ----------
+    model:
+        Target model.
+
+    device:
+        Running device.
+
+    images:
+        Clean input batch.
+
+    labels:
+        Ground-truth labels.   
+
+    epsilon:
+        Perturbation budget.
+
+    alpha:
+        Step size.
+
+    steps:
+        Number of optimization steps.
+
+    restarts:
+        Number of random restarts.
+    """
     images = images.clone().detach().to(device)
     labels = labels.clone().detach().to(device)
 

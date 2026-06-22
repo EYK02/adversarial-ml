@@ -1,9 +1,30 @@
 # src/attacks/fgsm.py
 
+"""
+Fast Gradient Sign Method (FGSM).
+"""
+
 import torch
 import torch.nn as nn
 
 def fgsm_attack(model, device, data, target, epsilon):
+    """
+    Generate adversarial examples using FGSM.
+
+    Parameters
+    ----------
+    model:
+        Target model.
+
+    device:
+        Running device.
+
+    data:
+        Clean input batch.
+
+    epsilon:
+        Maximum perturbation budget.
+    """
     data = data.clone().detach().to(device)
     data.requires_grad_(True)
 
