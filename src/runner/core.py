@@ -2,7 +2,7 @@ from typing import Optional
 
 from src.utils.config import ExperimentConfig
 from src.runner.executor import ExperimentRunner, Experiment
-from src.runner.builders import build_experiments
+from src.runner.experiment_builders import build_experiments
 
 
 def run_single_experiment(runner: ExperimentRunner, exp: Experiment) -> None:

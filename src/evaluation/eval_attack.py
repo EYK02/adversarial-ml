@@ -6,7 +6,7 @@ import time
 import sys
 
 from src.evaluation.utils import evaluate
-from src.runner.builders import build_eval_attack_ctx
+from src.runner.context_builders import build_eval_attack_ctx
 from src.utils.config import load_experiment
 from src.runner.context import RunContext
 

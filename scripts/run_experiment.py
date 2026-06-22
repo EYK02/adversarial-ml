@@ -1,7 +1,7 @@
 import argparse
 
 from src.utils.config import load_experiment
-from src.runner.builders import build_experiments
+from src.runner.experiment_builders import build_experiments
 from src.runner.core import run_stages
 
 
