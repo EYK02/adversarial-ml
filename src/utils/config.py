@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import yaml
+
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional
@@ -32,8 +33,9 @@ class ModelConfig:
 @dataclass
 class AttackConfig:
     name:       str
+    epsilon:    float | None = None
     steps:      Optional[int]   = None
-    alpha:      Optional[float] = None  # None = budget_scaled
+    alpha:      Optional[float] = None  
     restarts:   int             = 1
 
 
@@ -45,7 +47,6 @@ class TrainingConfig:
     learning_rate: float
     epsilon:       Optional[float] = None   # adversarial only
     attack:        Optional[AttackConfig] = None  # adversarial only
-
 
 @dataclass
 class ExperimentConfig:
@@ -112,11 +113,14 @@ def _load_model(path_str: str, root: Path) -> ModelConfig:
 
 
 def _load_attack(path_str: str, root: Path) -> AttackConfig:
-    d = _load_yaml(_resolve(path_str, root))
+    d       = _load_yaml(_resolve(path_str, root))
+    steps   = d.get("steps")
+    epsilon = d.get("epsilon")
     return AttackConfig(
         name        = d["name"],
-        steps       = d.get("steps"),
-        alpha       = None if d.get("alpha") == "budget_scaled" else d.get("alpha"),
+        steps       = steps,
+        epsilon     = epsilon,
+        alpha       = d.get("alpha"),
         restarts    = d.get("restarts", 1)
     )
 

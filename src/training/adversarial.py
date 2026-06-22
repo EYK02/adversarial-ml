@@ -1,188 +1,78 @@
 # src/training/adversarial.py
 
 import argparse
-import torch
-import torch.nn as nn
-import torch.optim as optim
 import time
+import torch
 
-from src.attacks.registry import get_attack_fn
-from src.datasets.mnist import get_train_loader, get_test_loader
+from src.utils.config import load_experiment
+from src.utils.context import build_adv_train_ctx
+from src.training.core import train_epoch, is_training_complete
 from src.evaluation.core import evaluate
-from src.models.factory import load_or_create_model
-from src.utils.config import load_experiment, TrainingConfig
-from src.utils.logger import JSONLLogger
-from src.utils.seed import set_seed, get_device
+from src.utils.context import attack_tag
 
 
-def train_epoch(model, device, loader, optimizer, criterion, attack_fn, epsilon):
-    model.train()
-
-    total_loss = 0
-    correct_clean = 0
-    correct_adv = 0
-
-    for data, target in loader:
-        data, target = data.to(device), target.to(device)
-
-        adv_data = attack_fn(model, device, data, target, epsilon)
-
-        combined_data = torch.cat((data, adv_data), dim=0)
-        combined_target = torch.cat((target, target), dim=0)
-
-        optimizer.zero_grad()
-        output = model(combined_data)
-        loss = criterion(output, combined_target)
-        loss.backward()
-        optimizer.step()
-
-        total_loss += loss.item()
-        correct_clean += (output[: data.size(0)].argmax(dim=1) == target).sum().item()
-        correct_adv += (output[data.size(0):].argmax(dim=1) == target).sum().item()
-
-    n = len(loader.dataset)
-
-    return (
-        total_loss / len(loader),
-        100.0 * correct_clean / n,
-        100.0 * correct_adv / n,
-    )
-
-
-def _attack_tag(cfg: TrainingConfig) -> str:
-    if cfg.attack.steps is not None:
-        return f"{cfg.attack.name}{cfg.attack.steps}"
-    return cfg.attack.name
-
-
-def train(cfg, training_cfg, seed: int):
-    set_seed(seed)
-    device = get_device()
-
-    tag = _attack_tag(training_cfg)
-
-    # ── paths ─────────────────────────────
-    run_ckpt_dir = cfg.paths.checkpoints / f"adv_{tag}_seed{seed}"
-    run_ckpt_dir.mkdir(parents=True, exist_ok=True)
-
-    latest_ckpt = run_ckpt_dir / "latest.pth"
-    final_ckpt = run_ckpt_dir / "final.pth"
-    best_ckpt = run_ckpt_dir / "best.pth"
-
-    if final_ckpt.exists():
-        print(f"[SKIP] {tag} seed={seed} already completed.")
+def train(ctx):
+    # early skip
+    if is_training_complete(ctx):
+        print(f"[SKIP] adversarial {ctx.training_cfg.attack.name} seed={ctx.seed} already completed.")
         return
-
-    log_path = cfg.paths.logs / f"adv_{tag}_seed{seed}.jsonl"
-    cfg.paths.logs.mkdir(parents=True, exist_ok=True)
-
-    logger = JSONLLogger(str(log_path))
-
-    train_loader = get_train_loader(cfg.dataset, training_cfg.batch_size, seed)
-    test_loader = get_test_loader(cfg.dataset, training_cfg.batch_size)
-
-    start_epoch = 0
-    best_test_acc = 0.0
-
-    if latest_ckpt.exists():
-        print(f"[RESUME] loading {latest_ckpt}")
-
-        ckpt = torch.load(latest_ckpt, map_location=device)
-
-        model = load_or_create_model(cfg.model, device)
-        model.load_state_dict(ckpt["model"])
-
-        optimizer = optim.Adam(model.parameters(), lr=training_cfg.learning_rate)
-        optimizer.load_state_dict(ckpt["optimizer"])
-
-        start_epoch = ckpt["epoch"] + 1
-        best_test_acc = ckpt.get("best_test_acc", 0.0)
-
-    else:
-        model = load_or_create_model(cfg.model, device)
-        optimizer = optim.Adam(model.parameters(), lr=training_cfg.learning_rate)
-
-    criterion = nn.CrossEntropyLoss()
-
-    # ── attack setup ───────────────────────
-    steps = training_cfg.attack.steps
-    alpha = training_cfg.attack.alpha
-
-    if alpha is None and steps is not None:
-        alpha = 2.5 * training_cfg.epsilon / steps
-
-    attack_fn, _ = get_attack_fn(
-        training_cfg.attack.name,
-        steps=steps,
-        alpha=alpha,
+        
+    print(
+        f"[TRAIN] adversarial {ctx.training_cfg.attack.name}, "
+        f"seed={ctx.seed}, eps={ctx.training_cfg.epsilon}"
     )
 
-    print(f"[TRAIN] {tag}, seed={seed}, eps={training_cfg.epsilon}")
+    for epoch in range(ctx.epoch, ctx.training_cfg.epochs):
 
-    for epoch in range(start_epoch, training_cfg.epochs):
+        start = time.perf_counter()
 
-        start_time = time.perf_counter()
+        train_loss, train_acc = train_epoch(ctx)
+        test_loss, test_acc = evaluate(ctx)
 
-        train_loss, clean_acc, adv_acc = train_epoch(
-            model,
-            device,
-            train_loader,
-            optimizer,
-            criterion,
-            attack_fn,
-            training_cfg.epsilon,
-        )
-
-        test_acc = evaluate(model, device, test_loader)
-
-        duration = time.perf_counter() - start_time
+        duration = time.perf_counter() - start
 
         print(
-            f"  epoch {epoch+1}/{training_cfg.epochs} | "
+            f"  epoch {epoch+1}/{ctx.training_cfg.epochs} | "
             f"loss={train_loss:.4f} | "
-            f"clean={clean_acc:.1f}% | "
-            f"adv={adv_acc:.1f}% | "
+            f"train_acc={train_acc:.1f}% | "
             f"test={test_acc:.1f}% | "
             f"duration={duration:.1f}s"
         )
 
-        # ── logging ───────────────────────
-        logger.log({
+        ctx.logger.log({
             "run_type": "adv_training",
-            "dataset": cfg.dataset.name,
-            "model": cfg.model.name,
-            "seed": seed,
-            "attack": training_cfg.attack.name,
-            "epsilon": float(training_cfg.epsilon),
+            "dataset": ctx.cfg.dataset.name,
+            "model": ctx.cfg.model.name,
+            "seed": ctx.seed,
+            "attack": ctx.training_cfg.attack.name,
+            "epsilon": float(ctx.training_cfg.epsilon),
             "epoch": epoch + 1,
             "train_loss": float(train_loss),
-            "train_clean_accuracy": float(clean_acc),
-            "train_adv_accuracy": float(adv_acc),
+            "train_accuracy": float(train_acc),
             "test_clean_accuracy": float(test_acc),
-            "duration_sec": duration
+            "duration_sec": duration,
         })
 
-        # ── best checkpoint ───────────────
-        if test_acc > best_test_acc:
-            best_test_acc = test_acc
-            torch.save(model.state_dict(), best_ckpt)
+        # update best
+        if test_acc > ctx.best_acc:
+            ctx.best_acc = test_acc
+            torch.save(ctx.model.state_dict(), ctx.best_ckpt)
 
-        # ── lightweight checkpoint (compressed) ─
+        # checkpoint (resume-ready)
         torch.save(
             {
-                "model": model.state_dict(),
-                "optimizer": optimizer.state_dict(),
+                "model": ctx.model.state_dict(),
+                "optimizer": ctx.optimizer.state_dict(),
                 "epoch": epoch,
-                "best_test_acc": best_test_acc,
+                "best_test_acc": ctx.best_acc,
             },
-            latest_ckpt,
+            ctx.latest_ckpt,
             _use_new_zipfile_serialization=True,
         )
 
-    # ── final model ───────────────────────
-    torch.save(model.state_dict(), final_ckpt, _use_new_zipfile_serialization=True)
-
-    print(f"[DONE] saved → {final_ckpt}")
+    # final model
+    torch.save(ctx.model.state_dict(), ctx.final_ckpt)
+    print(f"[DONE] saved → {ctx.final_ckpt}")
 
 
 def main():
@@ -193,20 +83,25 @@ def main():
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--smoke-test", action="store_true")
     parser.add_argument("--run-name", type=str, default=None)
+
     args = parser.parse_args()
 
     cfg = load_experiment(
-        args.experiment, 
-        dry_run=args.dry_run, 
+        args.experiment,
+        dry_run=args.dry_run,
         smoke_test=args.smoke_test,
         run_name=args.run_name
     )
+
     training_cfg = next(
         t for t in cfg.training
-        if t.method == "adversarial" and _attack_tag(t) == args.training_config
+        if t.method == "adversarial"
+        and attack_tag(t) == args.training_config
     )
 
-    train(cfg, training_cfg, seed=args.seed)
+    ctx = build_adv_train_ctx(cfg, training_cfg, args.seed)
+
+    train(ctx)
 
 
 if __name__ == "__main__":
